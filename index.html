@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life Organizer</title>
+<style>
+  :root{
+    --bg:#15171B;
+    --surface:#1E2126;
+    --ink:#ECEDEE;
+    --muted:#8B92A0;
+    --border:#2C3038;
+    --accent:#2FA98A;
+    --accent-soft:#16332C;
+    --overdue:#E0824B;
+    --overdue-soft:#3A2417;
+    --btn-bg:#2C3038;
+    --btn-text:#ECEDEE;
+    --font-display: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    --font-body: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{
+    max-width:640px;
+    margin:0 auto;
+    padding:32px 20px 100px;
+  }
+  header{
+    margin-bottom:16px;
+  }
+  .header-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+  }
+  h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:24px;
+    letter-spacing:-0.02em;
+    margin:0 0 4px;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:14px;
+    font-family:var(--font-mono);
+  }
+  .toggle-btn{
+    flex-shrink:0;
+    width:38px;
+    height:38px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--ink);
+    font-size:20px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:transform .2s ease, background .15s ease;
+  }
+  .toggle-btn.open{
+    background:var(--btn-bg);
+    color:var(--btn-text);
+    transform:rotate(45deg);
+  }
+  .add-row{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:24px;
+    overflow:hidden;
+    max-height:200px;
+    opacity:1;
+    transition:max-height .25s ease, opacity .2s ease, padding .25s ease, margin .25s ease;
+  }
+  .add-row.collapsed{
+    max-height:0;
+    opacity:0;
+    padding-top:0;
+    padding-bottom:0;
+    margin-bottom:8px;
+    border-width:0;
+  }
+  .add-row .fields{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .color-row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .swatch{
+    width:24px;
+    height:24px;
+    border-radius:50%;
+    border:1.5px solid transparent;
+    cursor:pointer;
+    padding:0;
+    box-sizing:border-box;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .swatch:hover{transform:scale(1.1);}
+  .swatch.selected{
+    box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--ink);
+  }
+  input[type="text"], input[type="date"]{
+    font-family:var(--font-body);
+    font-size:15px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    padding:10px 12px;
+    background:var(--bg);
+    color:var(--ink);
+    outline:none;
+    color-scheme:dark;
+  }
+  input[type="text"]{flex:1;}
+  input[type="date"]{
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--muted);
+    width:132px;
+  }
+  input[type="time"]{
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--muted);
+    width:100px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:9px;
+    padding:10px 12px;
+    outline:none;
+    color-scheme:dark;
+  }
+  input:focus{border-color:var(--accent);}
+  button.add-btn{
+    background:var(--btn-bg);
+    color:var(--btn-text);
+    border:none;
+    border-radius:9px;
+    padding:10px 16px;
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  button.add-btn:hover{background:var(--accent);}
+
+  .group{margin-bottom:26px;}
+  .group-label{
+    font-family:var(--font-mono);
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--muted);
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .group-label.overdue{color:var(--overdue);}
+  .group-label::after{
+    content:'';
+    flex:1;
+    height:1px;
+    background:var(--border);
+  }
+
+  .task{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:4px solid var(--border);
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:8px;
+    transition:opacity .2s ease, transform .2s ease;
+  }
+  .task.done{opacity:0.5;}
+
+  .check{
+    flex-shrink:0;
+    width:22px;
+    height:22px;
+    border-radius:7px;
+    border:2px solid var(--border);
+    background:var(--bg);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:1px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .check svg{
+    width:13px;
+    height:13px;
+    opacity:0;
+    transition:opacity .15s ease;
+  }
+  .task.done .check{
+    background:var(--accent);
+    border-color:var(--accent);
+  }
+  .task.done .check svg{opacity:1;}
+
+  .task-body{flex:1;min-width:0;}
+  .task-text{
+    font-size:15px;
+    line-height:1.4;
+    word-break:break-word;
+  }
+  .task.done .task-text{
+    text-decoration:line-through;
+    text-decoration-color:var(--muted);
+  }
+  .task-date{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    color:var(--muted);
+    margin-top:3px;
+  }
+  .task.overdue-item .task-date{color:var(--overdue);}
+
+  .del{
+    flex-shrink:0;
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    padding:2px 4px;
+    border-radius:6px;
+    transition:color .15s ease, background .15s ease;
+  }
+  .del:hover{color:var(--overdue);background:var(--overdue-soft);}
+
+  .edit-btn{
+    flex-shrink:0;
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:14px;
+    line-height:1;
+    cursor:pointer;
+    padding:4px;
+    border-radius:6px;
+    transition:color .15s ease, background .15s ease;
+  }
+  .edit-btn:hover{color:var(--ink);background:var(--accent-soft);}
+
+  .edit-form{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px;
+    margin-bottom:8px;
+  }
+  .edit-form input[type="text"]{
+    width:100%;
+  }
+  .edit-form .fields{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .edit-form .actions{
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
+  }
+  .edit-form .save-btn{
+    background:var(--btn-bg);
+    color:var(--btn-text);
+    border:none;
+    border-radius:9px;
+    padding:8px 14px;
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .edit-form .save-btn:hover{background:var(--accent);}
+  .edit-form .cancel-btn{
+    background:none;
+    border:1px solid var(--border);
+    color:var(--muted);
+    border-radius:9px;
+    padding:8px 14px;
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+  }
+
+  .empty{
+    text-align:center;
+    color:var(--muted);
+    font-family:var(--font-mono);
+    font-size:13px;
+    padding:40px 0;
+  }
+  .status{
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--muted);
+    margin-top:24px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="header-row">
+      <div>
+        <h1>Life Organizer</h1>
+      </div>
+      <button class="toggle-btn" id="toggleBtn" aria-label="Toggle add task form">+</button>
+    </div>
+  </header>
+
+  <div class="add-row" id="addRow">
+    <input type="text" id="taskInput" placeholder="Add a task…" />
+    <div class="color-row" id="colorRow">
+      <button type="button" class="swatch selected" data-color="" style="background:transparent;border:1.5px dashed var(--border);" aria-label="No colour"></button>
+      <button type="button" class="swatch" data-color="#1F6F5C" style="background:#1F6F5C;" aria-label="Green"></button>
+      <button type="button" class="swatch" data-color="#2D5FA6" style="background:#2D5FA6;" aria-label="Blue"></button>
+      <button type="button" class="swatch" data-color="#8A4FBF" style="background:#8A4FBF;" aria-label="Purple"></button>
+      <button type="button" class="swatch" data-color="#C4437B" style="background:#C4437B;" aria-label="Pink"></button>
+      <button type="button" class="swatch" data-color="#D4A017" style="background:#D4A017;" aria-label="Yellow"></button>
+      <button type="button" class="swatch" data-color="#D9731F" style="background:#D9731F;" aria-label="Orange"></button>
+      <button type="button" class="swatch" data-color="#C0392B" style="background:#C0392B;" aria-label="Red"></button>
+      <button type="button" class="swatch" data-color="#B3541E" style="background:#B3541E;" aria-label="Rust"></button>
+    </div>
+    <div class="fields">
+      <input type="date" id="dateInput" />
+      <input type="time" id="timeInput" step="300" />
+      <button class="add-btn" id="addBtn">Add</button>
+    </div>
+  </div>
+
+  <div id="lists"></div>
+
+</div>
+
+<script>
+let tasks = [];
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function todayStr(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+
+async function load(){
+  try{
+    const res = await fetch('/api/tasks');
+    if(!res.ok) throw new Error('Request failed: ' + res.status);
+    const data = await res.json();
+    tasks = Array.isArray(data.tasks) ? data.tasks : [];
+  }catch(e){
+    tasks = [];
+    console.error('Load failed:', e);
+  }
+  render();
+}
+
+async function save(){
+  try{
+    const res = await fetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tasks })
+    });
+    if(!res.ok) throw new Error('Request failed: ' + res.status);
+  }catch(e){
+    console.error('Save failed:', e);
+  }
+}
+
+let selectedColor = '';
+
+function addTask(){
+  const input = document.getElementById('taskInput');
+  const dateInput = document.getElementById('dateInput');
+  const timeInput = document.getElementById('timeInput');
+  const text = input.value.trim();
+  if(!text) return;
+  tasks.push({
+    id: uid(),
+    text,
+    date: dateInput.value || null,
+    time: timeInput.value || null,
+    color: selectedColor || null,
+    done: false,
+    created: Date.now()
+  });
+  input.value = '';
+  timeInput.value = '';
+  selectedColor = '';
+  colorRow.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+  colorRow.querySelector('.swatch[data-color=""]').classList.add('selected');
+  save();
+  render();
+}
+
+function startEdit(id){
+  editingId = id;
+  render();
+  // wire up swatch selection for the edit form now that it's in the DOM
+  const row = document.getElementById('editColorRow-' + id);
+  if(row){
+    row.addEventListener('click', (e) => {
+      const btn = e.target.closest('.swatch');
+      if(!btn) return;
+      row.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+      btn.classList.add('selected');
+      row.dataset.selected = btn.dataset.editColor || '';
+    });
+  }
+}
+
+function cancelEdit(){
+  editingId = null;
+  render();
+}
+
+function saveEdit(id){
+  const t = tasks.find(t=>t.id===id);
+  if(!t) return;
+  const textEl = document.getElementById('editText-' + id);
+  const dateEl = document.getElementById('editDate-' + id);
+  const timeEl = document.getElementById('editTime-' + id);
+  const colorRow = document.getElementById('editColorRow-' + id);
+  const newText = textEl.value.trim();
+  if(!newText) return;
+  t.text = newText;
+  t.date = dateEl.value || null;
+  t.time = timeEl.value || null;
+  const selectedSwatch = colorRow ? colorRow.querySelector('.swatch.selected') : null;
+  t.color = selectedSwatch ? (selectedSwatch.dataset.editColor || null) : t.color;
+  editingId = null;
+  save();
+  render();
+}
+
+function toggleTask(id){
+  const t = tasks.find(t=>t.id===id);
+  if(t){ t.done = !t.done; save(); render(); }
+}
+
+function deleteTask(id){
+  tasks = tasks.filter(t=>t.id!==id);
+  save();
+  render();
+}
+
+function fmtDate(dateStr){
+  if(!dateStr) return null;
+  return dateStr.replaceAll('-', '/');
+}
+
+function fmtTime(timeStr){
+  if(!timeStr) return null;
+  return timeStr;
+}
+
+let editingId = null;
+
+function render(){
+  const listsEl = document.getElementById('lists');
+  if(tasks.length === 0){
+    listsEl.innerHTML = '<div class="empty">no tasks yet — add one above</div>';
+    return;
+  }
+
+  const today = todayStr();
+  const pending = tasks.filter(t=>!t.done);
+  const done = tasks.filter(t=>t.done).sort((a,b)=>((a.date||'9999/99/99')+' '+(a.time||'')).localeCompare((b.date||'9999/99/99')+' '+(b.time||'')));
+
+  function sortKey(t){
+    return (t.date || '9999/99/99') + ' ' + (t.time || '');
+  }
+  const overdue = pending.filter(t=>t.date && t.date < today).sort((a,b)=>sortKey(a).localeCompare(sortKey(b)));
+  const todayTasks = pending.filter(t=>t.date === today).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  const upcoming = pending.filter(t=>t.date && t.date > today).sort((a,b)=>sortKey(a).localeCompare(sortKey(b)));
+  const noDate = pending.filter(t=>!t.date).sort((a,b)=>(a.time||'').localeCompare(b.time||'') || a.created-b.created);
+
+  let html = '';
+
+  function group(label, items, cls){
+    if(items.length === 0) return '';
+    let rows = items.map(t => t.id === editingId ? editForm(t) : taskRow(t)).join('');
+    return `<div class="group"><div class="group-label ${cls||''}">${label}</div>${rows}</div>`;
+  }
+
+  function contrastText(hex){
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    const luminance = (0.299*r + 0.587*g + 0.114*b) / 255;
+    return luminance > 0.6 ? '#1D2126' : '#FFFFFF';
+  }
+
+  const swatchColors = [
+    {c:'', label:'No colour'},
+    {c:'#1F6F5C', label:'Green'},
+    {c:'#2D5FA6', label:'Blue'},
+    {c:'#8A4FBF', label:'Purple'},
+    {c:'#C4437B', label:'Pink'},
+    {c:'#D4A017', label:'Yellow'},
+    {c:'#D9731F', label:'Orange'},
+    {c:'#C0392B', label:'Red'},
+    {c:'#B3541E', label:'Rust'}
+  ];
+
+  function editForm(t){
+    const swatchesHtml = swatchColors.map(sw => {
+      const isSelected = (t.color || '') === sw.c;
+      const bg = sw.c || 'transparent';
+      const border = sw.c ? '' : 'border:1.5px dashed var(--border);';
+      return `<button type="button" class="swatch ${isSelected?'selected':''}" data-edit-color="${sw.c}" style="background:${bg};${border}" aria-label="${sw.label}"></button>`;
+    }).join('');
+    return `
+      <div class="edit-form" id="editForm-${t.id}">
+        <input type="text" id="editText-${t.id}" value="${escapeAttr(t.text)}" />
+        <div class="color-row" id="editColorRow-${t.id}" data-task-id="${t.id}">${swatchesHtml}</div>
+        <div class="fields">
+          <input type="date" id="editDate-${t.id}" value="${t.date || ''}" />
+          <input type="time" id="editTime-${t.id}" step="300" value="${t.time || ''}" />
+        </div>
+        <div class="actions">
+          <button type="button" class="cancel-btn" onclick="cancelEdit()">Cancel</button>
+          <button type="button" class="save-btn" onclick="saveEdit('${t.id}')">Save</button>
+        </div>
+      </div>`;
+  }
+
+  function taskRow(t){
+    const overdueFlag = t.date && t.date < today && !t.done;
+    let colorStyle = '';
+    let mutedStyle = '';
+    if(t.color){
+      const textColor = contrastText(t.color);
+      colorStyle = `style="background:${t.color};border-color:${t.color};color:${textColor};"`;
+      mutedStyle = `style="color:${textColor};opacity:0.75;"`;
+    }
+    return `
+      <div class="task ${t.done?'done':''} ${overdueFlag?'overdue-item':''} ${t.color?'coloured':''}" ${colorStyle}>
+        <div class="check" onclick="toggleTask('${t.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="task-body">
+          <div class="task-text">${escapeHtml(t.text)}</div>
+          ${t.date ? `<div class="task-date" ${mutedStyle}>${fmtDate(t.date)}${t.time ? ' · ' + fmtTime(t.time) : ''}</div>` : ''}
+        </div>
+        <button class="edit-btn" onclick="startEdit('${t.id}')" ${t.color ? `style="color:${contrastText(t.color)};"` : ''} aria-label="Edit">✎</button>
+        <button class="del" onclick="deleteTask('${t.id}')" ${t.color ? `style="color:${contrastText(t.color)};"` : ''}>×</button>
+      </div>`;
+  }
+
+  html += group('Overdue', overdue, 'overdue');
+  html += group('Today', todayTasks);
+  html += group('Upcoming', upcoming);
+  html += group('No date', noDate);
+  html += group('Done', done);
+
+  listsEl.innerHTML = html;
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function escapeAttr(str){
+  return escapeHtml(str).replaceAll('"', '&quot;');
+}
+
+document.getElementById('addBtn').addEventListener('click', addTask);
+document.getElementById('taskInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') addTask();
+});
+document.getElementById('dateInput').value = todayStr();
+
+const addRow = document.getElementById('addRow');
+const toggleBtn = document.getElementById('toggleBtn');
+toggleBtn.addEventListener('click', () => {
+  addRow.classList.toggle('collapsed');
+  const isOpen = !addRow.classList.contains('collapsed');
+  toggleBtn.classList.toggle('open', isOpen);
+  if(isOpen) setTimeout(() => document.getElementById('taskInput').focus(), 200);
+});
+// start collapsed so the task list fills the screen
+addRow.classList.add('collapsed');
+
+const colorRow = document.getElementById('colorRow');
+colorRow.addEventListener('click', (e) => {
+  const btn = e.target.closest('.swatch');
+  if(!btn) return;
+  colorRow.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedColor = btn.dataset.color || '';
+});
+
+load();
+</script>
+</body>
+</html>

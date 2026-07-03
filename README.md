@@ -1,8 +1,0 @@
-{
-  "name": "llews-life-organizer",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "@vercel/kv": "^2.0.0"
-  }
-}

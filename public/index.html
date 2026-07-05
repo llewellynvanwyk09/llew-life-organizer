@@ -347,6 +347,201 @@
     font-size:13px;
     padding:40px 0;
   }
+
+  #foodAddRow, #burnAddRow{
+    max-height:none;
+    overflow:visible;
+  }
+  .mini-header{
+    font-family:var(--font-mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--muted);
+  }
+
+  .summary-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:20px;
+  }
+  .summary-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .summary-date{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:16px;
+  }
+  .target-edit{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--muted);
+  }
+  .target-edit input[type="number"]{
+    width:70px;
+    font-family:var(--font-mono);
+    font-size:13px;
+    border:1px solid var(--border);
+    border-radius:7px;
+    padding:6px 8px;
+    background:var(--bg);
+    color:var(--ink);
+    outline:none;
+  }
+  .target-edit button{
+    background:var(--btn-bg);
+    color:var(--btn-text);
+    border:none;
+    border-radius:7px;
+    padding:6px 10px;
+    font-size:12px;
+    font-family:var(--font-display);
+    font-weight:600;
+    cursor:pointer;
+  }
+  .summary-grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:12px;
+    margin-bottom:12px;
+  }
+  .summary-stat-label{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:2px;
+  }
+  .summary-stat-value{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:20px;
+  }
+  .summary-deficit-row{
+    border-top:1px solid var(--border);
+    padding-top:12px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .deficit-good{color:var(--accent);}
+  .surplus-bad{color:var(--overdue);}
+
+  .chip.meal{}
+
+  .cal-item{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:8px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .cal-item-main{flex:1;min-width:0;}
+  .cal-item-name{font-size:15px;font-weight:600;}
+  .cal-item-sub{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--muted);
+    margin-top:3px;
+  }
+  .cal-item-cals{
+    font-family:var(--font-mono);
+    font-size:15px;
+    font-weight:600;
+    flex-shrink:0;
+    white-space:nowrap;
+  }
+
+  .week-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-bottom:16px;
+    font-size:13px;
+  }
+  .week-table th, .week-table td{
+    text-align:right;
+    padding:8px 6px;
+    border-bottom:1px solid var(--border);
+    font-family:var(--font-mono);
+    white-space:nowrap;
+  }
+  .week-table th:first-child, .week-table td:first-child{
+    text-align:left;
+  }
+  .week-table th{
+    color:var(--muted);
+    font-weight:600;
+    font-size:11px;
+    text-transform:uppercase;
+  }
+  .week-table tfoot td{
+    font-weight:700;
+    border-bottom:none;
+    border-top:1px solid var(--border);
+  }
+  .week-nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .week-nav button{
+    background:var(--btn-bg);
+    color:var(--btn-text);
+    border:none;
+    border-radius:9px;
+    padding:8px 14px;
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .week-nav-label{
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--muted);
+  }
+  .week-estimate{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px;
+    font-size:14px;
+  }
+  .week-estimate .big{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:20px;
+  }
+  .week-estimate .caveat{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+
+  @media (max-width: 420px){
+    .summary-grid{grid-template-columns:1fr 1fr;}
+    .week-table{font-size:11.5px;}
+  }
   .add-row{
     display:flex;
     flex-direction:column;
@@ -427,6 +622,24 @@
     padding:10px 12px;
     outline:none;
     color-scheme:dark;
+  }
+  input[type="number"]{
+    font-family:var(--font-mono);
+    font-size:14px;
+    color:var(--ink);
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:9px;
+    padding:10px 12px;
+    outline:none;
+    color-scheme:dark;
+    width:100%;
+    min-width:0;
+  }
+  input[type="number"]:focus{border-color:var(--accent);}
+  #foodQtyInput, #foodCalInput, #burnCalInput{
+    flex:1;
+    min-width:70px;
   }
   input:focus{border-color:var(--accent);}
   button.add-btn{
@@ -626,6 +839,7 @@
   <div class="tab-bar" id="tabBar">
     <button class="tab-btn active" data-tab="tasks" id="tabTasksBtn">Tasks</button>
     <button class="tab-btn" data-tab="exercise" id="tabExerciseBtn">Exercise</button>
+    <button class="tab-btn" data-tab="calories" id="tabCaloriesBtn">Calories</button>
   </div>
 
   <div class="view" id="tasksView">
@@ -677,6 +891,57 @@
     <div id="exTrends" style="display:none">
       <select class="trend-select" id="trendExerciseSelect"></select>
       <div id="trendCharts"></div>
+    </div>
+  </div>
+
+  <div class="view" id="caloriesView" style="display:none">
+    <div class="sub-tab-bar" id="calSubTabBar">
+      <button class="sub-tab-btn active" data-subtab="today" id="calTabTodayBtn">Today</button>
+      <button class="sub-tab-btn" data-subtab="history" id="calTabHistoryBtn">History</button>
+      <button class="sub-tab-btn" data-subtab="week" id="calTabWeekBtn">Week</button>
+      <button class="sub-tab-btn" data-subtab="trends" id="calTabTrendsBtn">Trends</button>
+    </div>
+
+    <div id="calToday">
+      <div id="calSummaryCard"></div>
+
+      <div class="add-row" id="foodAddRow">
+        <div class="mini-header">Log food</div>
+        <input type="text" id="foodNameInput" placeholder="Food item…" list="foodNames" autocomplete="off" />
+        <datalist id="foodNames"></datalist>
+        <div class="chip-row" id="mealChipRow"></div>
+        <div class="fields">
+          <input type="number" step="1" min="0" id="foodQtyInput" placeholder="Qty" />
+          <input type="number" step="1" min="0" id="foodCalInput" placeholder="Cal / item" />
+          <input type="time" id="foodTimeInput" step="300" />
+        </div>
+        <div class="fields">
+          <input type="date" id="foodDateInput" />
+          <button class="add-btn" id="foodAddBtn">Log food</button>
+        </div>
+      </div>
+
+      <div class="add-row" id="burnAddRow">
+        <div class="mini-header">Log exercise burn</div>
+        <input type="text" id="burnTypeInput" placeholder="Exercise type…" list="burnTypes" autocomplete="off" />
+        <datalist id="burnTypes"></datalist>
+        <div class="fields">
+          <input type="number" step="1" min="0" id="burnCalInput" placeholder="Calories burned" />
+          <input type="date" id="burnDateInput" />
+          <button class="add-btn" id="burnAddBtn">Log burn</button>
+        </div>
+      </div>
+
+      <div id="calTodayList"></div>
+    </div>
+
+    <div id="calHistory" style="display:none"></div>
+
+    <div id="calWeek" style="display:none"></div>
+
+    <div id="calTrends" style="display:none">
+      <div class="trend-title">Deficit / surplus per day (kcal)</div>
+      <div class="trend-chart-wrap" id="calTrendChartWrap"></div>
     </div>
   </div>
 
@@ -1368,18 +1633,16 @@ document.getElementById('subTabTrendsBtn').addEventListener('click', () => {
 
 // --- top-level tab switching ---
 
-document.getElementById('tabTasksBtn').addEventListener('click', () => {
-  document.getElementById('tabTasksBtn').classList.add('active');
-  document.getElementById('tabExerciseBtn').classList.remove('active');
-  document.getElementById('tasksView').style.display = 'block';
-  document.getElementById('exerciseView').style.display = 'none';
-});
-document.getElementById('tabExerciseBtn').addEventListener('click', () => {
-  document.getElementById('tabExerciseBtn').classList.add('active');
-  document.getElementById('tabTasksBtn').classList.remove('active');
-  document.getElementById('exerciseView').style.display = 'block';
-  document.getElementById('tasksView').style.display = 'none';
-});
+function switchMainTab(tab){
+  ['tasks','exercise','calories'].forEach(t => {
+    document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1) + 'Btn').classList.toggle('active', t===tab);
+    document.getElementById(t + 'View').style.display = (t===tab) ? 'block' : 'none';
+  });
+  document.getElementById('toggleBtn').style.display = (tab === 'tasks') ? 'flex' : 'none';
+}
+document.getElementById('tabTasksBtn').addEventListener('click', () => switchMainTab('tasks'));
+document.getElementById('tabExerciseBtn').addEventListener('click', () => switchMainTab('exercise'));
+document.getElementById('tabCaloriesBtn').addEventListener('click', () => switchMainTab('calories'));
 
 document.getElementById('nextUpCard').addEventListener('click', (e) => {
   const btn = e.target.closest('.next-up-use-btn');
@@ -1388,6 +1651,452 @@ document.getElementById('nextUpCard').addEventListener('click', (e) => {
 });
 
 loadExercise();
+
+/* ================= CALORIE TRACKER ================= */
+
+const MEAL_TYPES = ['Breakfast','Lunch','Dinner','Snack'];
+const MEAL_COLORS = {
+  'Breakfast': '#E8A33D',
+  'Lunch': '#2FA98A',
+  'Dinner': '#2D5FA6',
+  'Snack': '#C4437B'
+};
+const KCAL_PER_KG = 7700;
+
+let calorieTarget = 2000;
+let foodLogs = [];
+let burnLogs = [];
+let selectedMeal = '';
+let calWeekOffset = 0;
+
+function calUid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+async function loadCalories(){
+  try{
+    const res = await fetch('/api/calories');
+    if(!res.ok) throw new Error('Request failed: ' + res.status);
+    const data = await res.json();
+    calorieTarget = typeof data.target === 'number' ? data.target : 2000;
+    foodLogs = Array.isArray(data.food) ? data.food : [];
+    burnLogs = Array.isArray(data.burn) ? data.burn : [];
+  }catch(e){
+    calorieTarget = 2000;
+    foodLogs = [];
+    burnLogs = [];
+    console.error('Calorie load failed:', e);
+  }
+  renderFoodNames();
+  renderBurnTypes();
+  renderCalSummary();
+  renderCalTodayList();
+  renderCalHistory();
+  renderCalWeek();
+  renderCalTrends();
+}
+
+async function saveCalories(){
+  try{
+    const res = await fetch('/api/calories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target: calorieTarget, food: foodLogs, burn: burnLogs })
+    });
+    if(!res.ok) throw new Error('Request failed: ' + res.status);
+  }catch(e){
+    console.error('Calorie save failed:', e);
+  }
+}
+
+function renderFoodNames(){
+  const names = new Set(foodLogs.map(f => f.name));
+  document.getElementById('foodNames').innerHTML = Array.from(names).sort((a,b)=>a.localeCompare(b))
+    .map(n => `<option value="${escapeAttr(n)}"></option>`).join('');
+}
+function renderBurnTypes(){
+  const types = new Set(burnLogs.map(b => b.exerciseType));
+  document.getElementById('burnTypes').innerHTML = Array.from(types).sort((a,b)=>a.localeCompare(b))
+    .map(n => `<option value="${escapeAttr(n)}"></option>`).join('');
+}
+
+function renderMealChips(){
+  const row = document.getElementById('mealChipRow');
+  row.innerHTML = MEAL_TYPES.map(m => {
+    const color = MEAL_COLORS[m];
+    const isSel = selectedMeal === m;
+    const style = isSel
+      ? `background:${color};border-color:${color};color:${contrastTextGlobal(color)};`
+      : `background:transparent;border-color:${color};color:${color};`;
+    return `<button type="button" class="chip meal ${isSel?'selected':''}" data-meal="${escapeAttr(m)}" style="${style}">${escapeHtml(m)}</button>`;
+  }).join('');
+}
+
+function findLastFoodFor(name){
+  const norm = name.trim().toLowerCase();
+  if(!norm) return null;
+  const matches = foodLogs.filter(f => f.name.trim().toLowerCase() === norm);
+  if(matches.length === 0) return null;
+  return matches.slice().sort((a,b)=> (a.date+'\u0000'+a.created) < (b.date+'\u0000'+b.created) ? 1 : -1)[0];
+}
+function findLastBurnFor(type){
+  const norm = type.trim().toLowerCase();
+  if(!norm) return null;
+  const matches = burnLogs.filter(b => b.exerciseType.trim().toLowerCase() === norm);
+  if(matches.length === 0) return null;
+  return matches.slice().sort((a,b)=> (a.date+'\u0000'+a.created) < (b.date+'\u0000'+b.created) ? 1 : -1)[0];
+}
+
+function addFoodLog(){
+  const nameInput = document.getElementById('foodNameInput');
+  const qtyInput = document.getElementById('foodQtyInput');
+  const calInput = document.getElementById('foodCalInput');
+  const timeInput = document.getElementById('foodTimeInput');
+  const dateInput = document.getElementById('foodDateInput');
+
+  const name = nameInput.value.trim();
+  const qty = parseFloat(qtyInput.value);
+  const calPer = parseFloat(calInput.value);
+  if(!name || isNaN(qty) || isNaN(calPer)) return;
+
+  foodLogs.push({
+    id: calUid(),
+    date: dateInput.value || todayStr(),
+    time: timeInput.value || null,
+    name,
+    quantity: qty,
+    caloriesPerItem: calPer,
+    mealType: selectedMeal || null,
+    created: Date.now()
+  });
+
+  nameInput.value = '';
+  qtyInput.value = '';
+  calInput.value = '';
+  selectedMeal = '';
+  renderMealChips();
+  saveCalories();
+  renderFoodNames();
+  renderCalSummary();
+  renderCalTodayList();
+  renderCalHistory();
+  renderCalWeek();
+  renderCalTrends();
+}
+
+function addBurnLog(){
+  const typeInput = document.getElementById('burnTypeInput');
+  const calInput = document.getElementById('burnCalInput');
+  const dateInput = document.getElementById('burnDateInput');
+
+  const type = typeInput.value.trim();
+  const cals = parseFloat(calInput.value);
+  if(!type || isNaN(cals)) return;
+
+  burnLogs.push({
+    id: calUid(),
+    date: dateInput.value || todayStr(),
+    exerciseType: type,
+    caloriesBurned: cals,
+    created: Date.now()
+  });
+
+  typeInput.value = '';
+  calInput.value = '';
+  saveCalories();
+  renderBurnTypes();
+  renderCalSummary();
+  renderCalTodayList();
+  renderCalHistory();
+  renderCalWeek();
+  renderCalTrends();
+}
+
+function deleteFoodLog(id){
+  foodLogs = foodLogs.filter(f => f.id !== id);
+  saveCalories();
+  renderCalSummary();
+  renderCalTodayList();
+  renderCalHistory();
+  renderCalWeek();
+  renderCalTrends();
+}
+function deleteBurnLog(id){
+  burnLogs = burnLogs.filter(b => b.id !== id);
+  saveCalories();
+  renderCalSummary();
+  renderCalTodayList();
+  renderCalHistory();
+  renderCalWeek();
+  renderCalTrends();
+}
+
+function computeDayTotals(dateStr){
+  const consumed = foodLogs.filter(f => f.date === dateStr)
+    .reduce((sum, f) => sum + (f.quantity * f.caloriesPerItem), 0);
+  const burned = burnLogs.filter(b => b.date === dateStr)
+    .reduce((sum, b) => sum + b.caloriesBurned, 0);
+  const net = consumed - burned;
+  const deficit = calorieTarget - net;
+  return { consumed, burned, net, target: calorieTarget, deficit };
+}
+
+function saveTarget(){
+  const input = document.getElementById('targetInput');
+  const val = parseFloat(input.value);
+  if(isNaN(val) || val <= 0) return;
+  calorieTarget = val;
+  saveCalories();
+  renderCalSummary();
+  renderCalWeek();
+  renderCalTrends();
+}
+
+function renderCalSummary(){
+  const el = document.getElementById('calSummaryCard');
+  const today = todayStr();
+  const t = computeDayTotals(today);
+  const isDeficit = t.deficit >= 0;
+  el.innerHTML = `
+    <div class="summary-card">
+      <div class="summary-top">
+        <div class="summary-date">${fmtDate(today)}</div>
+        <div class="target-edit">
+          Target
+          <input type="number" id="targetInput" value="${calorieTarget}" />
+          kcal
+          <button type="button" id="saveTargetBtn">Save</button>
+        </div>
+      </div>
+      <div class="summary-grid">
+        <div>
+          <div class="summary-stat-label">Consumed</div>
+          <div class="summary-stat-value">${Math.round(t.consumed)}</div>
+        </div>
+        <div>
+          <div class="summary-stat-label">Burned</div>
+          <div class="summary-stat-value">${Math.round(t.burned)}</div>
+        </div>
+      </div>
+      <div class="summary-deficit-row">
+        <span class="summary-stat-label">${isDeficit ? 'Deficit' : 'Surplus'} today</span>
+        <span class="summary-stat-value ${isDeficit ? 'deficit-good' : 'surplus-bad'}">${isDeficit ? '' : '+'}${Math.abs(Math.round(t.deficit))} kcal</span>
+      </div>
+    </div>`;
+  document.getElementById('saveTargetBtn').addEventListener('click', saveTarget);
+}
+
+function fmtTimeShort(t){ return t || ''; }
+
+function renderCalTodayList(){
+  const el = document.getElementById('calTodayList');
+  const today = todayStr();
+  const foods = foodLogs.filter(f => f.date === today).sort((a,b)=> (a.time||'').localeCompare(b.time||'') || a.created-b.created);
+  const burns = burnLogs.filter(b => b.date === today).sort((a,b)=> a.created-b.created);
+
+  if(foods.length === 0 && burns.length === 0){
+    el.innerHTML = '<div class="empty">nothing logged today yet</div>';
+    return;
+  }
+
+  const foodHtml = foods.map(f => {
+    const total = Math.round(f.quantity * f.caloriesPerItem);
+    const mealColor = f.mealType ? (MEAL_COLORS[f.mealType] || 'var(--muted)') : null;
+    return `
+      <div class="cal-item">
+        <div class="cal-item-main">
+          <div class="cal-item-name">${escapeHtml(f.name)}</div>
+          <div class="cal-item-sub">
+            ${f.quantity} × ${f.caloriesPerItem} kcal${f.time ? ' · ' + escapeHtml(f.time) : ''}
+            ${f.mealType ? ` · <span style="color:${mealColor};">${escapeHtml(f.mealType)}</span>` : ''}
+          </div>
+        </div>
+        <div class="cal-item-cals">${total} kcal</div>
+        <button class="del" onclick="deleteFoodLog('${f.id}')" aria-label="Delete">×</button>
+      </div>`;
+  }).join('');
+
+  const burnHtml = burns.map(b => `
+      <div class="cal-item">
+        <div class="cal-item-main">
+          <div class="cal-item-name">${escapeHtml(b.exerciseType)}</div>
+          <div class="cal-item-sub">exercise burn</div>
+        </div>
+        <div class="cal-item-cals" style="color:var(--accent);">−${Math.round(b.caloriesBurned)} kcal</div>
+        <button class="del" onclick="deleteBurnLog('${b.id}')" aria-label="Delete">×</button>
+      </div>`).join('');
+
+  el.innerHTML = foodHtml + burnHtml;
+}
+
+function renderCalHistory(){
+  const el = document.getElementById('calHistory');
+  const allDates = new Set([...foodLogs.map(f=>f.date), ...burnLogs.map(b=>b.date)]);
+  if(allDates.size === 0){
+    el.innerHTML = '<div class="empty">no history yet</div>';
+    return;
+  }
+  const dates = Array.from(allDates).sort((a,b)=> b.localeCompare(a));
+  el.innerHTML = dates.map(date => {
+    const t = computeDayTotals(date);
+    const isDeficit = t.deficit >= 0;
+    const foods = foodLogs.filter(f=>f.date===date).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+    const burns = burnLogs.filter(b=>b.date===date);
+    const itemsHtml = foods.map(f => `
+        <div class="cal-item">
+          <div class="cal-item-main">
+            <div class="cal-item-name">${escapeHtml(f.name)}</div>
+            <div class="cal-item-sub">${f.quantity} × ${f.caloriesPerItem} kcal${f.time ? ' · ' + escapeHtml(f.time) : ''}${f.mealType ? ' · ' + escapeHtml(f.mealType) : ''}</div>
+          </div>
+          <div class="cal-item-cals">${Math.round(f.quantity*f.caloriesPerItem)} kcal</div>
+          <button class="del" onclick="deleteFoodLog('${f.id}')" aria-label="Delete">×</button>
+        </div>`).join('') + burns.map(b => `
+        <div class="cal-item">
+          <div class="cal-item-main">
+            <div class="cal-item-name">${escapeHtml(b.exerciseType)}</div>
+            <div class="cal-item-sub">exercise burn</div>
+          </div>
+          <div class="cal-item-cals" style="color:var(--accent);">−${Math.round(b.caloriesBurned)} kcal</div>
+          <button class="del" onclick="deleteBurnLog('${b.id}')" aria-label="Delete">×</button>
+        </div>`).join('');
+    return `<div class="ex-date-group">
+      <div class="ex-date-label">${fmtDate(date)}</div>
+      <div class="cal-item-sub" style="margin-bottom:8px;">
+        Consumed ${Math.round(t.consumed)} · Burned ${Math.round(t.burned)} ·
+        <span class="${isDeficit?'deficit-good':'surplus-bad'}">${isDeficit?'Deficit':'Surplus'} ${Math.abs(Math.round(t.deficit))} kcal</span>
+      </div>
+      ${itemsHtml}
+    </div>`;
+  }).join('');
+}
+
+function getMonday(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+function addDays(date, n){
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+function toISODate(d){
+  return d.toISOString().slice(0,10);
+}
+
+function renderCalWeek(){
+  const el = document.getElementById('calWeek');
+  const refDate = addDays(new Date(todayStr() + 'T00:00:00'), calWeekOffset * 7);
+  const monday = getMonday(toISODate(refDate));
+  const days = Array.from({length:7}, (_, i) => toISODate(addDays(monday, i)));
+
+  function hasData(d){
+    return foodLogs.some(f=>f.date===d) || burnLogs.some(b=>b.date===d);
+  }
+
+  const rows = days.map(d => {
+    if(!hasData(d)){
+      return `<tr>
+        <td>${fmtDate(d).slice(5)}</td>
+        <td>–</td><td>–</td><td>–</td>
+      </tr>`;
+    }
+    const t = computeDayTotals(d);
+    const isDeficit = t.deficit >= 0;
+    return `<tr>
+      <td>${fmtDate(d).slice(5)}</td>
+      <td>${Math.round(t.consumed)}</td>
+      <td>${Math.round(t.burned)}</td>
+      <td class="${isDeficit?'deficit-good':'surplus-bad'}">${isDeficit?'':'+'}${Math.abs(Math.round(t.deficit))}</td>
+    </tr>`;
+  }).join('');
+
+  const loggedDays = days.filter(hasData);
+  const weekTotalDeficit = loggedDays.reduce((sum,d) => sum + computeDayTotals(d).deficit, 0);
+  const weightChangeKg = weekTotalDeficit / KCAL_PER_KG;
+  const isLoss = weightChangeKg >= 0;
+  const weekLabel = calWeekOffset === 0 ? 'This week' : (fmtDate(days[0]) + ' – ' + fmtDate(days[6]));
+
+  const estimateHtml = loggedDays.length === 0
+    ? `<div class="week-estimate"><div class="cal-item-sub">No days logged this week yet</div></div>`
+    : `<div class="week-estimate">
+        <div class="big ${isLoss?'deficit-good':'surplus-bad'}">
+          ${isLoss ? 'Estimated loss' : 'Estimated gain'}: ${Math.abs(weightChangeKg).toFixed(2)} kg
+        </div>
+        <div class="caveat">Based on ${loggedDays.length} logged day${loggedDays.length===1?'':'s'} this week · ${KCAL_PER_KG} kcal ≈ 1kg — a rough estimate, actual results vary by person.</div>
+      </div>`;
+
+  el.innerHTML = `
+    <div class="week-nav">
+      <button type="button" id="weekPrevBtn">‹ Prev</button>
+      <span class="week-nav-label">${weekLabel}</span>
+      <button type="button" id="weekNextBtn">Next ›</button>
+    </div>
+    <table class="week-table">
+      <thead><tr><th>Day</th><th>Consumed</th><th>Burned</th><th>Deficit</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td>Total</td><td colspan="2"></td><td class="${isLoss?'deficit-good':'surplus-bad'}">${loggedDays.length===0?'–':(isLoss?'':'+')+Math.abs(Math.round(weekTotalDeficit))}</td></tr></tfoot>
+    </table>
+    ${estimateHtml}
+  `;
+  document.getElementById('weekPrevBtn').addEventListener('click', () => { calWeekOffset--; renderCalWeek(); });
+  document.getElementById('weekNextBtn').addEventListener('click', () => { calWeekOffset++; renderCalWeek(); });
+}
+
+function renderCalTrends(){
+  const el = document.getElementById('calTrendChartWrap');
+  const allDates = Array.from(new Set([...foodLogs.map(f=>f.date), ...burnLogs.map(b=>b.date)])).sort();
+  const points = allDates.map(d => ({ x: d, y: Math.round(computeDayTotals(d).deficit) }));
+  el.innerHTML = lineChartSVG(points, '');
+}
+
+// --- wiring ---
+
+document.getElementById('foodAddBtn').addEventListener('click', addFoodLog);
+document.getElementById('burnAddBtn').addEventListener('click', addBurnLog);
+
+document.getElementById('foodNameInput').addEventListener('change', (e) => {
+  const match = findLastFoodFor(e.target.value);
+  if(match){
+    document.getElementById('foodQtyInput').value = match.quantity;
+    document.getElementById('foodCalInput').value = match.caloriesPerItem;
+    selectedMeal = match.mealType || '';
+    renderMealChips();
+  }
+});
+document.getElementById('burnTypeInput').addEventListener('change', (e) => {
+  const match = findLastBurnFor(e.target.value);
+  if(match){
+    document.getElementById('burnCalInput').value = match.caloriesBurned;
+  }
+});
+
+document.getElementById('mealChipRow').addEventListener('click', (e) => {
+  const btn = e.target.closest('.chip');
+  if(!btn) return;
+  const m = btn.dataset.meal;
+  selectedMeal = (selectedMeal === m) ? '' : m;
+  renderMealChips();
+});
+
+document.getElementById('foodTimeInput').value = new Date().toTimeString().slice(0,5);
+document.getElementById('foodDateInput').value = todayStr();
+document.getElementById('burnDateInput').value = todayStr();
+renderMealChips();
+
+function switchCalSubtab(tab){
+  ['today','history','week','trends'].forEach(t => {
+    document.getElementById('calTab' + t.charAt(0).toUpperCase() + t.slice(1) + 'Btn').classList.toggle('active', t===tab);
+    document.getElementById('cal' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = (t===tab) ? 'block' : 'none';
+  });
+}
+document.getElementById('calTabTodayBtn').addEventListener('click', () => switchCalSubtab('today'));
+document.getElementById('calTabHistoryBtn').addEventListener('click', () => switchCalSubtab('history'));
+document.getElementById('calTabWeekBtn').addEventListener('click', () => switchCalSubtab('week'));
+document.getElementById('calTabTrendsBtn').addEventListener('click', () => switchCalSubtab('trends'));
+
+loadCalories();
+
 
 </script>
 </body>

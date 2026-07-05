@@ -542,6 +542,8 @@
   @media (max-width: 420px){
     .summary-grid{grid-template-columns:1fr 1fr;}
     .week-table{font-size:11.5px;}
+    input[type="number"]::placeholder{font-size:12px;}
+    input[type="number"]{padding:10px 8px;}
   }
   .add-row{
     display:flex;
@@ -913,7 +915,7 @@
         <div class="chip-row" id="mealChipRow"></div>
         <div class="fields">
           <input type="number" step="1" min="0" id="foodQtyInput" placeholder="Qty" />
-          <input type="number" step="1" min="0" id="foodCalInput" placeholder="Cal/item" />
+          <input type="number" step="1" min="0" id="foodCalInput" placeholder="kcal" />
           <input type="time" id="foodTimeInput" step="300" />
         </div>
         <div class="fields">
@@ -927,7 +929,7 @@
         <input type="text" id="burnTypeInput" placeholder="Exercise type…" list="burnTypes" autocomplete="off" />
         <datalist id="burnTypes"></datalist>
         <div class="fields">
-          <input type="number" step="1" min="0" id="burnCalInput" placeholder="Calories" />
+          <input type="number" step="1" min="0" id="burnCalInput" placeholder="kcal" />
           <input type="date" id="burnDateInput" />
           <button class="add-btn" id="burnAddBtn">Log burn</button>
         </div>

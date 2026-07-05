@@ -387,9 +387,10 @@
     font-family:var(--font-mono);
     font-size:12px;
     color:var(--muted);
+    flex-wrap:wrap;
   }
   .target-edit input[type="number"]{
-    width:70px;
+    width:64px;
     font-family:var(--font-mono);
     font-size:13px;
     border:1px solid var(--border);
@@ -912,7 +913,7 @@
         <div class="chip-row" id="mealChipRow"></div>
         <div class="fields">
           <input type="number" step="1" min="0" id="foodQtyInput" placeholder="Qty" />
-          <input type="number" step="1" min="0" id="foodCalInput" placeholder="Cal / item" />
+          <input type="number" step="1" min="0" id="foodCalInput" placeholder="Cal/item" />
           <input type="time" id="foodTimeInput" step="300" />
         </div>
         <div class="fields">
@@ -926,7 +927,7 @@
         <input type="text" id="burnTypeInput" placeholder="Exercise type…" list="burnTypes" autocomplete="off" />
         <datalist id="burnTypes"></datalist>
         <div class="fields">
-          <input type="number" step="1" min="0" id="burnCalInput" placeholder="Calories burned" />
+          <input type="number" step="1" min="0" id="burnCalInput" placeholder="Calories" />
           <input type="date" id="burnDateInput" />
           <button class="add-btn" id="burnAddBtn">Log burn</button>
         </div>
@@ -940,8 +941,14 @@
     <div id="calWeek" style="display:none"></div>
 
     <div id="calTrends" style="display:none">
-      <div class="trend-title">Deficit / surplus per day (kcal)</div>
-      <div class="trend-chart-wrap" id="calTrendChartWrap"></div>
+      <div class="trend-block">
+        <div class="trend-title">Target adherence per day (kcal)</div>
+        <div class="trend-chart-wrap" id="calTargetTrendWrap"></div>
+      </div>
+      <div class="trend-block">
+        <div class="trend-title">Deficit / surplus vs maintenance per day (kcal)</div>
+        <div class="trend-chart-wrap" id="calMaintTrendWrap"></div>
+      </div>
     </div>
   </div>
 
@@ -1665,6 +1672,7 @@ const MEAL_COLORS = {
 const KCAL_PER_KG = 7700;
 
 let calorieTarget = 2000;
+let calorieMaintenance = 2000;
 let foodLogs = [];
 let burnLogs = [];
 let selectedMeal = '';
@@ -1678,10 +1686,12 @@ async function loadCalories(){
     if(!res.ok) throw new Error('Request failed: ' + res.status);
     const data = await res.json();
     calorieTarget = typeof data.target === 'number' ? data.target : 2000;
+    calorieMaintenance = typeof data.maintenance === 'number' ? data.maintenance : calorieTarget;
     foodLogs = Array.isArray(data.food) ? data.food : [];
     burnLogs = Array.isArray(data.burn) ? data.burn : [];
   }catch(e){
     calorieTarget = 2000;
+    calorieMaintenance = 2000;
     foodLogs = [];
     burnLogs = [];
     console.error('Calorie load failed:', e);
@@ -1700,7 +1710,7 @@ async function saveCalories(){
     const res = await fetch('/api/calories', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target: calorieTarget, food: foodLogs, burn: burnLogs })
+      body: JSON.stringify({ target: calorieTarget, maintenance: calorieMaintenance, food: foodLogs, burn: burnLogs })
     });
     if(!res.ok) throw new Error('Request failed: ' + res.status);
   }catch(e){
@@ -1836,17 +1846,22 @@ function computeDayTotals(dateStr){
   const burned = burnLogs.filter(b => b.date === dateStr)
     .reduce((sum, b) => sum + b.caloriesBurned, 0);
   const net = consumed - burned;
-  const deficit = calorieTarget - net;
-  return { consumed, burned, net, target: calorieTarget, deficit };
+  const trueDeficit = calorieMaintenance - net;
+  const targetDelta = calorieTarget - net;
+  return { consumed, burned, net, target: calorieTarget, maintenance: calorieMaintenance, trueDeficit, targetDelta };
 }
 
-function saveTarget(){
-  const input = document.getElementById('targetInput');
-  const val = parseFloat(input.value);
-  if(isNaN(val) || val <= 0) return;
-  calorieTarget = val;
+function saveGoals(){
+  const maintInput = document.getElementById('maintenanceInput');
+  const targetInput = document.getElementById('targetInput');
+  const maintVal = parseFloat(maintInput.value);
+  const targetVal = parseFloat(targetInput.value);
+  if(isNaN(maintVal) || maintVal <= 0 || isNaN(targetVal) || targetVal <= 0) return;
+  calorieMaintenance = maintVal;
+  calorieTarget = targetVal;
   saveCalories();
   renderCalSummary();
+  renderCalHistory();
   renderCalWeek();
   renderCalTrends();
 }
@@ -1855,16 +1870,19 @@ function renderCalSummary(){
   const el = document.getElementById('calSummaryCard');
   const today = todayStr();
   const t = computeDayTotals(today);
-  const isDeficit = t.deficit >= 0;
+  const isDeficit = t.trueDeficit >= 0;
+  const isOnTarget = t.targetDelta >= 0;
   el.innerHTML = `
     <div class="summary-card">
       <div class="summary-top">
         <div class="summary-date">${fmtDate(today)}</div>
         <div class="target-edit">
+          Maint.
+          <input type="number" id="maintenanceInput" value="${calorieMaintenance}" />
           Target
           <input type="number" id="targetInput" value="${calorieTarget}" />
           kcal
-          <button type="button" id="saveTargetBtn">Save</button>
+          <button type="button" id="saveGoalsBtn">Save</button>
         </div>
       </div>
       <div class="summary-grid">
@@ -1878,11 +1896,15 @@ function renderCalSummary(){
         </div>
       </div>
       <div class="summary-deficit-row">
-        <span class="summary-stat-label">${isDeficit ? 'Deficit' : 'Surplus'} today</span>
-        <span class="summary-stat-value ${isDeficit ? 'deficit-good' : 'surplus-bad'}">${isDeficit ? '' : '+'}${Math.abs(Math.round(t.deficit))} kcal</span>
+        <span class="summary-stat-label">${isOnTarget ? 'Under target' : 'Over target'} today</span>
+        <span class="summary-stat-value ${isOnTarget ? 'deficit-good' : 'surplus-bad'}">${isOnTarget ? '' : '+'}${Math.abs(Math.round(t.targetDelta))} kcal</span>
+      </div>
+      <div class="summary-deficit-row">
+        <span class="summary-stat-label">${isDeficit ? 'Deficit' : 'Surplus'} vs maintenance</span>
+        <span class="summary-stat-value ${isDeficit ? 'deficit-good' : 'surplus-bad'}">${isDeficit ? '' : '+'}${Math.abs(Math.round(t.trueDeficit))} kcal</span>
       </div>
     </div>`;
-  document.getElementById('saveTargetBtn').addEventListener('click', saveTarget);
+  document.getElementById('saveGoalsBtn').addEventListener('click', saveGoals);
 }
 
 function fmtTimeShort(t){ return t || ''; }
@@ -1938,7 +1960,8 @@ function renderCalHistory(){
   const dates = Array.from(allDates).sort((a,b)=> b.localeCompare(a));
   el.innerHTML = dates.map(date => {
     const t = computeDayTotals(date);
-    const isDeficit = t.deficit >= 0;
+    const isDeficit = t.trueDeficit >= 0;
+    const isOnTarget = t.targetDelta >= 0;
     const foods = foodLogs.filter(f=>f.date===date).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
     const burns = burnLogs.filter(b=>b.date===date);
     const itemsHtml = foods.map(f => `
@@ -1962,7 +1985,8 @@ function renderCalHistory(){
       <div class="ex-date-label">${fmtDate(date)}</div>
       <div class="cal-item-sub" style="margin-bottom:8px;">
         Consumed ${Math.round(t.consumed)} · Burned ${Math.round(t.burned)} ·
-        <span class="${isDeficit?'deficit-good':'surplus-bad'}">${isDeficit?'Deficit':'Surplus'} ${Math.abs(Math.round(t.deficit))} kcal</span>
+        <span class="${isOnTarget?'deficit-good':'surplus-bad'}">Target ${isOnTarget?'':'+'}${Math.abs(Math.round(t.targetDelta))}</span> ·
+        <span class="${isDeficit?'deficit-good':'surplus-bad'}">${isDeficit?'Deficit':'Surplus'} ${Math.abs(Math.round(t.trueDeficit))} kcal</span>
       </div>
       ${itemsHtml}
     </div>`;
@@ -1999,23 +2023,27 @@ function renderCalWeek(){
     if(!hasData(d)){
       return `<tr>
         <td>${fmtDate(d).slice(5)}</td>
-        <td>–</td><td>–</td><td>–</td>
+        <td>–</td><td>–</td><td>–</td><td>–</td>
       </tr>`;
     }
     const t = computeDayTotals(d);
-    const isDeficit = t.deficit >= 0;
+    const isDeficit = t.trueDeficit >= 0;
+    const isOnTarget = t.targetDelta >= 0;
     return `<tr>
       <td>${fmtDate(d).slice(5)}</td>
       <td>${Math.round(t.consumed)}</td>
       <td>${Math.round(t.burned)}</td>
-      <td class="${isDeficit?'deficit-good':'surplus-bad'}">${isDeficit?'':'+'}${Math.abs(Math.round(t.deficit))}</td>
+      <td class="${isOnTarget?'deficit-good':'surplus-bad'}">${isOnTarget?'':'+'}${Math.abs(Math.round(t.targetDelta))}</td>
+      <td class="${isDeficit?'deficit-good':'surplus-bad'}">${isDeficit?'':'+'}${Math.abs(Math.round(t.trueDeficit))}</td>
     </tr>`;
   }).join('');
 
   const loggedDays = days.filter(hasData);
-  const weekTotalDeficit = loggedDays.reduce((sum,d) => sum + computeDayTotals(d).deficit, 0);
+  const weekTotalTargetDelta = loggedDays.reduce((sum,d) => sum + computeDayTotals(d).targetDelta, 0);
+  const weekTotalDeficit = loggedDays.reduce((sum,d) => sum + computeDayTotals(d).trueDeficit, 0);
   const weightChangeKg = weekTotalDeficit / KCAL_PER_KG;
   const isLoss = weightChangeKg >= 0;
+  const isOnTargetWeek = weekTotalTargetDelta >= 0;
   const weekLabel = calWeekOffset === 0 ? 'This week' : (fmtDate(days[0]) + ' – ' + fmtDate(days[6]));
 
   const estimateHtml = loggedDays.length === 0
@@ -2024,7 +2052,7 @@ function renderCalWeek(){
         <div class="big ${isLoss?'deficit-good':'surplus-bad'}">
           ${isLoss ? 'Estimated loss' : 'Estimated gain'}: ${Math.abs(weightChangeKg).toFixed(2)} kg
         </div>
-        <div class="caveat">Based on ${loggedDays.length} logged day${loggedDays.length===1?'':'s'} this week · ${KCAL_PER_KG} kcal ≈ 1kg — a rough estimate, actual results vary by person.</div>
+        <div class="caveat">Based on your Maintenance number, over ${loggedDays.length} logged day${loggedDays.length===1?'':'s'} this week · ${KCAL_PER_KG} kcal ≈ 1kg — a rough estimate, actual results vary by person.</div>
       </div>`;
 
   el.innerHTML = `
@@ -2034,9 +2062,13 @@ function renderCalWeek(){
       <button type="button" id="weekNextBtn">Next ›</button>
     </div>
     <table class="week-table">
-      <thead><tr><th>Day</th><th>Consumed</th><th>Burned</th><th>Deficit</th></tr></thead>
+      <thead><tr><th>Day</th><th>Cons.</th><th>Burn</th><th>Tgt Δ</th><th>Deficit</th></tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr><td>Total</td><td colspan="2"></td><td class="${isLoss?'deficit-good':'surplus-bad'}">${loggedDays.length===0?'–':(isLoss?'':'+')+Math.abs(Math.round(weekTotalDeficit))}</td></tr></tfoot>
+      <tfoot><tr>
+        <td>Total</td><td colspan="2"></td>
+        <td class="${isOnTargetWeek?'deficit-good':'surplus-bad'}">${loggedDays.length===0?'–':(isOnTargetWeek?'':'+')+Math.abs(Math.round(weekTotalTargetDelta))}</td>
+        <td class="${isLoss?'deficit-good':'surplus-bad'}">${loggedDays.length===0?'–':(isLoss?'':'+')+Math.abs(Math.round(weekTotalDeficit))}</td>
+      </tr></tfoot>
     </table>
     ${estimateHtml}
   `;
@@ -2045,10 +2077,11 @@ function renderCalWeek(){
 }
 
 function renderCalTrends(){
-  const el = document.getElementById('calTrendChartWrap');
   const allDates = Array.from(new Set([...foodLogs.map(f=>f.date), ...burnLogs.map(b=>b.date)])).sort();
-  const points = allDates.map(d => ({ x: d, y: Math.round(computeDayTotals(d).deficit) }));
-  el.innerHTML = lineChartSVG(points, '');
+  const targetPoints = allDates.map(d => ({ x: d, y: Math.round(computeDayTotals(d).targetDelta) }));
+  const maintPoints = allDates.map(d => ({ x: d, y: Math.round(computeDayTotals(d).trueDeficit) }));
+  document.getElementById('calTargetTrendWrap').innerHTML = lineChartSVG(targetPoints, '');
+  document.getElementById('calMaintTrendWrap').innerHTML = lineChartSVG(maintPoints, '');
 }
 
 // --- wiring ---

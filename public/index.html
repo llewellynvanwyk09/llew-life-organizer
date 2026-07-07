@@ -205,6 +205,16 @@
   }
 
   .ex-date-group{margin-bottom:22px;}
+  .cal-history-header{
+    cursor:pointer;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cal-history-caret{
+    display:inline-block;
+    width:12px;
+    color:var(--muted);
+  }
   .ex-date-label{
     font-family:var(--font-mono);
     font-size:12px;
@@ -1952,6 +1962,8 @@ function renderCalTodayList(){
   el.innerHTML = foodHtml + burnHtml;
 }
 
+let calHistoryExpanded = new Set();
+
 function renderCalHistory(){
   const el = document.getElementById('calHistory');
   const allDates = new Set([...foodLogs.map(f=>f.date), ...burnLogs.map(b=>b.date)]);
@@ -1964,6 +1976,7 @@ function renderCalHistory(){
     const t = computeDayTotals(date);
     const isDeficit = t.trueDeficit >= 0;
     const isOnTarget = t.targetDelta >= 0;
+    const isOpen = calHistoryExpanded.has(date);
     const foods = foodLogs.filter(f=>f.date===date).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
     const burns = burnLogs.filter(b=>b.date===date);
     const itemsHtml = foods.map(f => `
@@ -1984,13 +1997,17 @@ function renderCalHistory(){
           <button class="del" onclick="deleteBurnLog('${b.id}')" aria-label="Delete">×</button>
         </div>`).join('');
     return `<div class="ex-date-group">
-      <div class="ex-date-label">${fmtDate(date)}</div>
+      <div class="cal-history-header" data-date="${escapeAttr(date)}">
+        <div class="ex-date-label" style="margin-bottom:0;flex:1;">
+          <span class="cal-history-caret">${isOpen ? '▾' : '▸'}</span> ${fmtDate(date)}
+        </div>
+      </div>
       <div class="cal-item-sub" style="margin-bottom:8px;">
         Consumed ${Math.round(t.consumed)} · Burned ${Math.round(t.burned)} ·
         <span class="${isOnTarget?'deficit-good':'surplus-bad'}">Target ${isOnTarget?'':'+'}${Math.abs(Math.round(t.targetDelta))}</span> ·
-        <span class="${isDeficit?'deficit-good':'surplus-bad'}">${isDeficit?'Deficit':'Surplus'} ${Math.abs(Math.round(t.trueDeficit))} kcal</span>
+        <span class="${isDeficit?'deficit-good':'surplus-bad'}">${isDeficit?'Deficit':'Surplus'} ${Math.abs(Math.round(t.trueDeficit))}</span>
       </div>
-      ${itemsHtml}
+      <div class="cal-history-items" style="display:${isOpen ? 'block' : 'none'};">${itemsHtml}</div>
     </div>`;
   }).join('');
 }
@@ -2130,6 +2147,15 @@ document.getElementById('calTabTodayBtn').addEventListener('click', () => switch
 document.getElementById('calTabHistoryBtn').addEventListener('click', () => switchCalSubtab('history'));
 document.getElementById('calTabWeekBtn').addEventListener('click', () => switchCalSubtab('week'));
 document.getElementById('calTabTrendsBtn').addEventListener('click', () => switchCalSubtab('trends'));
+
+document.getElementById('calHistory').addEventListener('click', (e) => {
+  const header = e.target.closest('.cal-history-header');
+  if(!header) return;
+  const date = header.dataset.date;
+  if(calHistoryExpanded.has(date)) calHistoryExpanded.delete(date);
+  else calHistoryExpanded.add(date);
+  renderCalHistory();
+});
 
 loadCalories();
 

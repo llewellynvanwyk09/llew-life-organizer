@@ -1542,7 +1542,11 @@ function renderHistory(){
   el.innerHTML = dates.map(date => {
     const entries = byDate[date].slice().sort((a,b)=> b.created - a.created);
     const isOpen = exHistoryExpanded.has(date);
-    const nameList = entries.map(l => l.exercise).join(', ');
+    const nameListHtml = entries.map(l => {
+      const primaryMuscle = (l.muscleGroups && l.muscleGroups[0]) || null;
+      const color = primaryMuscle ? (MUSCLE_COLORS[primaryMuscle] || 'var(--muted)') : 'var(--muted)';
+      return `<span style="color:${color};">${escapeHtml(l.exercise)}</span>`;
+    }).join(', ');
     const entriesHtml = entries.map(l => `
       <div class="ex-entry">
         <div class="ex-entry-top">
@@ -1561,7 +1565,7 @@ function renderHistory(){
           <span class="cal-history-caret">${isOpen ? '▾' : '▸'}</span> ${fmtDate(date)}
         </div>
       </div>
-      <div class="ex-sets-summary" style="margin-bottom:8px;">${escapeHtml(nameList)}</div>
+      <div class="ex-sets-summary" style="margin-bottom:8px;">${nameListHtml}</div>
       <div class="cal-history-items" style="display:${isOpen ? 'block' : 'none'};">${entriesHtml}</div>
     </div>`;
   }).join('');

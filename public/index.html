@@ -2002,10 +2002,12 @@ function renderCalHistory(){
           <span class="cal-history-caret">${isOpen ? '▾' : '▸'}</span> ${fmtDate(date)}
         </div>
       </div>
+      <div class="cal-item-sub" style="margin-bottom:2px;">
+        Consumed ${Math.round(t.consumed)} · Burned ${Math.round(t.burned)}
+      </div>
       <div class="cal-item-sub" style="margin-bottom:8px;">
-        Consumed ${Math.round(t.consumed)} · Burned ${Math.round(t.burned)} ·
-        <span class="${isOnTarget?'deficit-good':'surplus-bad'}">Target ${isOnTarget?'':'+'}${Math.abs(Math.round(t.targetDelta))}</span> ·
-        <span class="${isDeficit?'deficit-good':'surplus-bad'}">${isDeficit?'Deficit':'Surplus'} ${Math.abs(Math.round(t.trueDeficit))}</span>
+        Target <span class="${isOnTarget?'deficit-good':'surplus-bad'}">${isOnTarget?'':'+'}${Math.abs(Math.round(t.targetDelta))}</span> ·
+        ${isDeficit?'Deficit':'Surplus'} <span class="${isDeficit?'deficit-good':'surplus-bad'}">${Math.abs(Math.round(t.trueDeficit))}</span>
       </div>
       <div class="cal-history-items" style="display:${isOpen ? 'block' : 'none'};">${itemsHtml}</div>
     </div>`;

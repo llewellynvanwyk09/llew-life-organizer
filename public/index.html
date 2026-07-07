@@ -215,6 +215,16 @@
     width:12px;
     color:var(--muted);
   }
+  .cal-summary-line{
+    display:flex;
+    flex-wrap:wrap;
+    column-gap:8px;
+    row-gap:2px;
+    margin-bottom:8px;
+  }
+  .cal-summary-group{
+    white-space:nowrap;
+  }
   .ex-date-label{
     font-family:var(--font-mono);
     font-size:12px;
@@ -460,18 +470,19 @@
     border-radius:12px;
     padding:12px 14px;
     margin-bottom:8px;
+  }
+  .cal-item-top{
     display:flex;
-    align-items:flex-start;
+    align-items:center;
     justify-content:space-between;
     gap:10px;
   }
-  .cal-item-main{flex:1;min-width:0;}
-  .cal-item-name{font-size:15px;font-weight:600;}
+  .cal-item-name{font-size:15px;font-weight:600;flex:1;min-width:0;}
   .cal-item-sub{
     font-family:var(--font-mono);
     font-size:12px;
     color:var(--muted);
-    margin-top:3px;
+    margin-top:4px;
   }
   .cal-item-cals{
     font-family:var(--font-mono);
@@ -1937,26 +1948,26 @@ function renderCalTodayList(){
     const mealColor = f.mealType ? (MEAL_COLORS[f.mealType] || 'var(--muted)') : null;
     return `
       <div class="cal-item">
-        <div class="cal-item-main">
+        <div class="cal-item-top">
           <div class="cal-item-name">${escapeHtml(f.name)}</div>
-          <div class="cal-item-sub">
-            ${f.quantity} × ${f.caloriesPerItem} kcal${f.time ? ' · ' + escapeHtml(f.time) : ''}
-            ${f.mealType ? ` · <span style="color:${mealColor};">${escapeHtml(f.mealType)}</span>` : ''}
-          </div>
+          <div class="cal-item-cals">${total} kcal</div>
+          <button class="del" onclick="deleteFoodLog('${f.id}')" aria-label="Delete">×</button>
         </div>
-        <div class="cal-item-cals">${total} kcal</div>
-        <button class="del" onclick="deleteFoodLog('${f.id}')" aria-label="Delete">×</button>
+        <div class="cal-item-sub">
+          ${f.quantity} × ${f.caloriesPerItem} kcal${f.time ? ' · ' + escapeHtml(f.time) : ''}
+          ${f.mealType ? ` · <span style="color:${mealColor};">${escapeHtml(f.mealType)}</span>` : ''}
+        </div>
       </div>`;
   }).join('');
 
   const burnHtml = burns.map(b => `
       <div class="cal-item">
-        <div class="cal-item-main">
+        <div class="cal-item-top">
           <div class="cal-item-name">${escapeHtml(b.exerciseType)}</div>
-          <div class="cal-item-sub">exercise burn</div>
+          <div class="cal-item-cals" style="color:var(--accent);">−${Math.round(b.caloriesBurned)} kcal</div>
+          <button class="del" onclick="deleteBurnLog('${b.id}')" aria-label="Delete">×</button>
         </div>
-        <div class="cal-item-cals" style="color:var(--accent);">−${Math.round(b.caloriesBurned)} kcal</div>
-        <button class="del" onclick="deleteBurnLog('${b.id}')" aria-label="Delete">×</button>
+        <div class="cal-item-sub">exercise burn</div>
       </div>`).join('');
 
   el.innerHTML = foodHtml + burnHtml;
@@ -1979,22 +1990,25 @@ function renderCalHistory(){
     const isOpen = calHistoryExpanded.has(date);
     const foods = foodLogs.filter(f=>f.date===date).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
     const burns = burnLogs.filter(b=>b.date===date);
-    const itemsHtml = foods.map(f => `
+    const itemsHtml = foods.map(f => {
+      const mealColor = f.mealType ? (MEAL_COLORS[f.mealType] || 'var(--muted)') : null;
+      return `
         <div class="cal-item">
-          <div class="cal-item-main">
+          <div class="cal-item-top">
             <div class="cal-item-name">${escapeHtml(f.name)}</div>
-            <div class="cal-item-sub">${f.quantity} × ${f.caloriesPerItem} kcal${f.time ? ' · ' + escapeHtml(f.time) : ''}${f.mealType ? ' · ' + escapeHtml(f.mealType) : ''}</div>
+            <div class="cal-item-cals">${Math.round(f.quantity*f.caloriesPerItem)} kcal</div>
+            <button class="del" onclick="deleteFoodLog('${f.id}')" aria-label="Delete">×</button>
           </div>
-          <div class="cal-item-cals">${Math.round(f.quantity*f.caloriesPerItem)} kcal</div>
-          <button class="del" onclick="deleteFoodLog('${f.id}')" aria-label="Delete">×</button>
-        </div>`).join('') + burns.map(b => `
+          <div class="cal-item-sub">${f.quantity} × ${f.caloriesPerItem} kcal${f.time ? ' · ' + escapeHtml(f.time) : ''}${f.mealType ? ` · <span style="color:${mealColor};">${escapeHtml(f.mealType)}</span>` : ''}</div>
+        </div>`;
+    }).join('') + burns.map(b => `
         <div class="cal-item">
-          <div class="cal-item-main">
+          <div class="cal-item-top">
             <div class="cal-item-name">${escapeHtml(b.exerciseType)}</div>
-            <div class="cal-item-sub">exercise burn</div>
+            <div class="cal-item-cals" style="color:var(--accent);">−${Math.round(b.caloriesBurned)} kcal</div>
+            <button class="del" onclick="deleteBurnLog('${b.id}')" aria-label="Delete">×</button>
           </div>
-          <div class="cal-item-cals" style="color:var(--accent);">−${Math.round(b.caloriesBurned)} kcal</div>
-          <button class="del" onclick="deleteBurnLog('${b.id}')" aria-label="Delete">×</button>
+          <div class="cal-item-sub">exercise burn</div>
         </div>`).join('');
     return `<div class="ex-date-group">
       <div class="cal-history-header" data-date="${escapeAttr(date)}">
@@ -2002,12 +2016,10 @@ function renderCalHistory(){
           <span class="cal-history-caret">${isOpen ? '▾' : '▸'}</span> ${fmtDate(date)}
         </div>
       </div>
-      <div class="cal-item-sub" style="margin-bottom:2px;">
-        Consumed ${Math.round(t.consumed)} · Burned ${Math.round(t.burned)}
-      </div>
-      <div class="cal-item-sub" style="margin-bottom:8px;">
-        Target <span class="${isOnTarget?'deficit-good':'surplus-bad'}">${isOnTarget?'':'+'}${Math.abs(Math.round(t.targetDelta))}</span> ·
-        ${isDeficit?'Deficit':'Surplus'} <span class="${isDeficit?'deficit-good':'surplus-bad'}">${Math.abs(Math.round(t.trueDeficit))}</span>
+      <div class="cal-item-sub cal-summary-line">
+        <span class="cal-summary-group">Consumed ${Math.round(t.consumed)} · Burned ${Math.round(t.burned)}</span>
+        <span class="cal-summary-group">Target <span class="${isOnTarget?'deficit-good':'surplus-bad'}">${isOnTarget?'':'+'}${Math.abs(Math.round(t.targetDelta))}</span> ·
+        ${isDeficit?'Deficit':'Surplus'} <span class="${isDeficit?'deficit-good':'surplus-bad'}">${Math.abs(Math.round(t.trueDeficit))}</span></span>
       </div>
       <div class="cal-history-items" style="display:${isOpen ? 'block' : 'none'};">${itemsHtml}</div>
     </div>`;

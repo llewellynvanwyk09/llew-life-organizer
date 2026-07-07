@@ -1243,15 +1243,14 @@ load();
 
 /* ================= EXERCISE TRACKER ================= */
 
-const MUSCLE_GROUPS = ['Chest','Shoulders','Biceps','Triceps','Abs','Trapezius','Chest/Shoulders'];
+const MUSCLE_GROUPS = ['Chest','Shoulders','Biceps','Triceps','Abs','Traps'];
 const MUSCLE_COLORS = {
   'Chest': '#2D5FA6',
   'Shoulders': '#8A4FBF',
   'Biceps': '#1F6F5C',
   'Triceps': '#D9731F',
   'Abs': '#C0392B',
-  'Trapezius': '#D4A017',
-  'Chest/Shoulders': '#C4437B'
+  'Traps': '#D4A017'
 };
 
 function contrastTextGlobal(hex){
@@ -1260,37 +1259,48 @@ function contrastTextGlobal(hex){
   return luminance > 0.6 ? '#1D2126' : '#FFFFFF';
 }
 
+// Normalizes any muscle-group value (old single string, old "Chest/Shoulders"
+// combo, new array, or null) into a clean array of individual muscle names.
+function normalizeMuscles(val){
+  if(Array.isArray(val)) return val.filter(Boolean);
+  if(typeof val === 'string' && val){
+    if(val === 'Chest/Shoulders') return ['Chest','Shoulders'];
+    return [val];
+  }
+  return [];
+}
+
 // Fixed routine order, taken from the spreadsheet — cycles through in this
-// exact sequence every workout session.
+// exact sequence every workout session. 'm' is an array of muscle groups.
 const ROUTINE = [
-  {ex:'Dumbbell press', m:'Chest'},
-  {ex:'Lateral raise', m:'Shoulders'},
-  {ex:'Bicep curl (close)', m:'Biceps'},
-  {ex:'Lying Tricep Extension', m:'Triceps'},
-  {ex:'Various Abs Exercises', m:'Abs'},
-  {ex:'Overhead press', m:'Shoulders'},
-  {ex:'Chest flyers', m:'Chest'},
-  {ex:'Cross body hammer curl', m:'Biceps'},
-  {ex:'Overhead raises', m:'Triceps'},
-  {ex:'Various Abs Exercises', m:'Abs'},
-  {ex:'Inclined dumbbell press', m:'Chest'},
-  {ex:'Lateral raise', m:'Shoulders'},
-  {ex:'Concentration curl', m:'Biceps'},
-  {ex:'Upright row', m:'Shoulders'},
-  {ex:'Various Abs Exercises', m:'Abs'},
-  {ex:'Front overhead press', m:'Shoulders'},
-  {ex:'Bicep curl (45 degree)', m:'Biceps'},
-  {ex:'Middle press', m:'Chest'},
-  {ex:'Hammer curl', m:'Biceps'},
-  {ex:'Various Abs Exercises', m:'Abs'},
-  {ex:'Lower raises', m:'Chest'},
-  {ex:'Crush curl', m:'Biceps'},
-  {ex:'Tricep dumbbell kickback', m:'Triceps'},
-  {ex:'Push ups', m:'Chest/Shoulders'},
-  {ex:'Various Abs Exercises', m:'Abs'},
-  {ex:'Dumbbell shrugs', m:'Trapezius'},
-  {ex:'Rear delt flys', m:'Shoulders'},
-  {ex:'Limp wrist bicep curls', m:'Biceps'}
+  {ex:'Dumbbell press', m:['Chest']},
+  {ex:'Lateral raise', m:['Shoulders']},
+  {ex:'Bicep curl (close)', m:['Biceps']},
+  {ex:'Lying Tricep Extension', m:['Triceps']},
+  {ex:'Various Abs Exercises', m:['Abs']},
+  {ex:'Overhead press', m:['Shoulders']},
+  {ex:'Chest flyers', m:['Chest']},
+  {ex:'Cross body hammer curl', m:['Biceps']},
+  {ex:'Overhead raises', m:['Triceps']},
+  {ex:'Various Abs Exercises', m:['Abs']},
+  {ex:'Inclined dumbbell press', m:['Chest']},
+  {ex:'Lateral raise', m:['Shoulders']},
+  {ex:'Concentration curl', m:['Biceps']},
+  {ex:'Upright row', m:['Shoulders']},
+  {ex:'Various Abs Exercises', m:['Abs']},
+  {ex:'Front overhead press', m:['Shoulders']},
+  {ex:'Bicep curl (45 degree)', m:['Biceps']},
+  {ex:'Middle press', m:['Chest']},
+  {ex:'Hammer curl', m:['Biceps']},
+  {ex:'Various Abs Exercises', m:['Abs']},
+  {ex:'Lower raises', m:['Chest']},
+  {ex:'Crush curl', m:['Biceps']},
+  {ex:'Tricep dumbbell kickback', m:['Triceps']},
+  {ex:'Push ups', m:['Chest','Shoulders']},
+  {ex:'Various Abs Exercises', m:['Abs']},
+  {ex:'Dumbbell shrugs', m:['Traps']},
+  {ex:'Rear delt flys', m:['Shoulders']},
+  {ex:'Limp wrist bicep curls', m:['Biceps']}
 ];
 const SEED_EXERCISES = [
   'Dumbbell press','Lateral raise','Bicep curl (close)','Lying Tricep Extension',
@@ -1303,7 +1313,7 @@ const SEED_EXERCISES = [
 
 let exerciseLogs = [];
 let currentSets = [{weight:'', reps:''}];
-let selectedMuscle = '';
+let selectedMuscles = [];
 let activeSubtab = 'history';
 
 function exUid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -1318,10 +1328,31 @@ async function loadExercise(){
     exerciseLogs = [];
     console.error('Exercise load failed:', e);
   }
+  const migrated = migrateExerciseMuscleGroups();
   renderExerciseNames();
   renderHistory();
   renderTrendSelect();
   renderNextUp();
+  if(migrated) saveExercise();
+}
+
+// One-time migration: converts old entries using the single-string
+// muscleGroup field (including the now-removed "Chest/Shoulders" combo)
+// into the new muscleGroups array field. Returns true if anything changed.
+function migrateExerciseMuscleGroups(){
+  let changed = false;
+  exerciseLogs.forEach(l => {
+    if(!Array.isArray(l.muscleGroups)){
+      l.muscleGroups = normalizeMuscles(l.muscleGroup);
+      delete l.muscleGroup;
+      changed = true;
+    }
+    if(l.muscleGroups.includes('Trapezius')){
+      l.muscleGroups = l.muscleGroups.map(m => m === 'Trapezius' ? 'Traps' : m);
+      changed = true;
+    }
+  });
+  return changed;
 }
 
 async function saveExercise(){
@@ -1349,7 +1380,7 @@ function renderMuscleChips(){
   const row = document.getElementById('muscleChipRow');
   row.innerHTML = MUSCLE_GROUPS.map(m => {
     const color = MUSCLE_COLORS[m] || '#6B7280';
-    const isSel = selectedMuscle === m;
+    const isSel = selectedMuscles.includes(m);
     const style = isSel
       ? `background:${color};border-color:${color};color:${contrastTextGlobal(color)};`
       : `background:transparent;border-color:${color};color:${color};`;
@@ -1391,13 +1422,13 @@ function addExerciseLog(){
     id: exUid(),
     date: dateInput.value || todayStr(),
     exercise: name,
-    muscleGroup: selectedMuscle || null,
+    muscleGroups: selectedMuscles.slice(),
     sets: cleanSets,
     created: Date.now()
   });
 
   nameInput.value = '';
-  selectedMuscle = '';
+  selectedMuscles = [];
   currentSets = [{weight:'', reps:''}];
   renderMuscleChips();
   renderSetsEditor();
@@ -1448,16 +1479,16 @@ function computeNextUp(){
   };
 }
 
-function useNextUp(exName, muscle){
+function useNextUp(exName, muscleCsv){
   document.getElementById('tabExerciseBtn').click();
   const nameInput = document.getElementById('exNameInput');
   nameInput.value = exName;
   const match = findLastLogFor(exName);
   if(match){
     currentSets = match.sets.map(s => ({weight: String(s.weight), reps: String(s.reps)}));
-    selectedMuscle = match.muscleGroup || muscle || '';
+    selectedMuscles = normalizeMuscles(match.muscleGroups && match.muscleGroups.length ? match.muscleGroups : (muscleCsv ? muscleCsv.split(',') : []));
   } else {
-    selectedMuscle = muscle || '';
+    selectedMuscles = muscleCsv ? muscleCsv.split(',').filter(Boolean) : [];
     currentSets = [{weight:'', reps:''}];
   }
   renderMuscleChips();
@@ -1476,7 +1507,10 @@ function renderNextUp(){
       </div>`;
     return;
   }
-  const color = MUSCLE_COLORS[result.next.m] || 'var(--muted)';
+  const nextMuscles = normalizeMuscles(result.next.m);
+  const muscleHtml = nextMuscles.map(m =>
+    `<span style="color:${MUSCLE_COLORS[m] || 'var(--muted)'};">${escapeHtml(m)}</span>`
+  ).join(' · ');
   const thenNames = result.upcoming.map(u => u.ex).join(', ');
   el.innerHTML = `
     <div class="next-up-card">
@@ -1484,13 +1518,15 @@ function renderNextUp(){
       <div class="next-up-main">
         <div>
           <div class="next-up-name">${escapeHtml(result.next.ex)}</div>
-          <div class="next-up-muscle" style="color:${color};">${escapeHtml(result.next.m)}</div>
+          <div class="next-up-muscle">${muscleHtml}</div>
         </div>
-        <button type="button" class="next-up-use-btn" data-next-ex="${escapeAttr(result.next.ex)}" data-next-muscle="${escapeAttr(result.next.m)}">Log this</button>
+        <button type="button" class="next-up-use-btn" data-next-ex="${escapeAttr(result.next.ex)}" data-next-muscle="${escapeAttr(nextMuscles.join(','))}">Log this</button>
       </div>
       ${thenNames ? `<div class="next-up-then">then: ${escapeHtml(thenNames)}</div>` : ''}
     </div>`;
 }
+
+let exHistoryExpanded = new Set();
 
 function renderHistory(){
   const el = document.getElementById('exHistory');
@@ -1505,19 +1541,29 @@ function renderHistory(){
   const dates = Object.keys(byDate).sort((a,b)=> b.localeCompare(a));
   el.innerHTML = dates.map(date => {
     const entries = byDate[date].slice().sort((a,b)=> b.created - a.created);
+    const isOpen = exHistoryExpanded.has(date);
+    const nameList = entries.map(l => l.exercise).join(', ');
     const entriesHtml = entries.map(l => `
       <div class="ex-entry">
         <div class="ex-entry-top">
           <div>
             <span class="ex-name">${escapeHtml(l.exercise)}</span>
-            ${l.muscleGroup ? `<span class="ex-muscle-tag" style="color:${MUSCLE_COLORS[l.muscleGroup] || 'var(--muted)'};"> · ${escapeHtml(l.muscleGroup)}</span>` : ''}
+            ${(l.muscleGroups||[]).map(m => `<span class="ex-muscle-tag" style="color:${MUSCLE_COLORS[m] || 'var(--muted)'};"> · ${escapeHtml(m)}</span>`).join('')}
           </div>
           <button class="del" onclick="deleteExerciseLog('${l.id}')" aria-label="Delete">×</button>
         </div>
         <div class="ex-sets-summary">${escapeHtml(fmtSets(l.sets))}</div>
       </div>
     `).join('');
-    return `<div class="ex-date-group"><div class="ex-date-label">${fmtDate(date)}</div>${entriesHtml}</div>`;
+    return `<div class="ex-date-group">
+      <div class="cal-history-header" data-date="${escapeAttr(date)}">
+        <div class="ex-date-label" style="margin-bottom:0;flex:1;">
+          <span class="cal-history-caret">${isOpen ? '▾' : '▸'}</span> ${fmtDate(date)}
+        </div>
+      </div>
+      <div class="ex-sets-summary" style="margin-bottom:8px;">${escapeHtml(nameList)}</div>
+      <div class="cal-history-items" style="display:${isOpen ? 'block' : 'none'};">${entriesHtml}</div>
+    </div>`;
   }).join('');
 }
 
@@ -1603,7 +1649,7 @@ exNameInput.addEventListener('change', () => {
   const match = findLastLogFor(exNameInput.value);
   if(match){
     currentSets = match.sets.map(s => ({weight: String(s.weight), reps: String(s.reps)}));
-    selectedMuscle = match.muscleGroup || '';
+    selectedMuscles = normalizeMuscles(match.muscleGroups);
     renderMuscleChips();
     renderSetsEditor();
   }
@@ -1613,7 +1659,9 @@ document.getElementById('muscleChipRow').addEventListener('click', (e) => {
   const btn = e.target.closest('.chip');
   if(!btn) return;
   const m = btn.dataset.muscle;
-  selectedMuscle = (selectedMuscle === m) ? '' : m;
+  const idx = selectedMuscles.indexOf(m);
+  if(idx === -1) selectedMuscles.push(m);
+  else selectedMuscles.splice(idx, 1);
   renderMuscleChips();
 });
 
@@ -1678,6 +1726,15 @@ document.getElementById('nextUpCard').addEventListener('click', (e) => {
   const btn = e.target.closest('.next-up-use-btn');
   if(!btn) return;
   useNextUp(btn.dataset.nextEx, btn.dataset.nextMuscle);
+});
+
+document.getElementById('exHistory').addEventListener('click', (e) => {
+  const header = e.target.closest('.cal-history-header');
+  if(!header) return;
+  const date = header.dataset.date;
+  if(exHistoryExpanded.has(date)) exHistoryExpanded.delete(date);
+  else exHistoryExpanded.add(date);
+  renderHistory();
 });
 
 loadExercise();

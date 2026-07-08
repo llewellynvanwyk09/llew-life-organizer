@@ -306,59 +306,36 @@
     height:auto;
     display:block;
   }
-  .next-up-card{
+  .ex-ref-card{
     background:var(--surface);
     border:1px solid var(--border);
     border-radius:14px;
     padding:16px;
     margin-bottom:20px;
   }
-  .next-up-label{
+  .ex-ref-header{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .ex-ref-body{
+    margin-top:14px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .ex-ref-group-label{
     font-family:var(--font-mono);
     font-size:11px;
     text-transform:uppercase;
     letter-spacing:0.08em;
-    color:var(--muted);
-    margin-bottom:8px;
+    margin-bottom:6px;
   }
-  .next-up-main{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-bottom:10px;
-  }
-  .next-up-name{
-    font-size:18px;
-    font-weight:700;
-    font-family:var(--font-display);
-  }
-  .next-up-muscle{
-    font-family:var(--font-mono);
-    font-size:12px;
-  }
-  .next-up-use-btn{
-    background:var(--btn-bg);
-    color:var(--btn-text);
-    border:none;
-    border-radius:9px;
-    padding:8px 14px;
-    font-family:var(--font-display);
-    font-weight:600;
-    font-size:13px;
-    cursor:pointer;
-    flex-shrink:0;
-  }
-  .next-up-then{
-    font-family:var(--font-mono);
-    font-size:12px;
-    color:var(--muted);
-  }
-  .next-up-complete{
-    font-family:var(--font-mono);
-    font-size:13px;
-    color:var(--accent);
+  .ex-ref-item{
+    background:transparent;
   }
   .trend-empty, .empty{
     text-align:center;
@@ -880,6 +857,12 @@
         <button type="button" class="swatch" data-color="#C0392B" style="background:#C0392B;" aria-label="Red"></button>
         <button type="button" class="swatch" data-color="#B3541E" style="background:#B3541E;" aria-label="Rust"></button>
       </div>
+      <div class="chip-row" id="repeatChipRow">
+        <button type="button" class="chip selected" data-repeat="">No repeat</button>
+        <button type="button" class="chip" data-repeat="daily">Daily</button>
+        <button type="button" class="chip" data-repeat="weekly">Weekly</button>
+        <button type="button" class="chip" data-repeat="monthly">Monthly</button>
+      </div>
       <div class="fields">
         <input type="date" id="dateInput" />
         <input type="time" id="timeInput" step="300" />
@@ -891,7 +874,7 @@
   </div>
 
   <div class="view" id="exerciseView" style="display:none">
-    <div id="nextUpCard"></div>
+    <div id="exRefCard"></div>
 
     <div class="add-row" id="exAddRow">
       <input type="text" id="exNameInput" placeholder="Exercise name…" list="exerciseNames" autocomplete="off" />
@@ -1014,6 +997,28 @@ async function save(){
 }
 
 let selectedColor = '';
+let selectedRepeat = '';
+
+function computeNextRecurrenceDate(dateStr, recurrenceType){
+  if(!dateStr || !recurrenceType) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  if(recurrenceType === 'daily'){
+    return toISODate(addDays(d, 1));
+  }
+  if(recurrenceType === 'weekly'){
+    return toISODate(addDays(d, 7));
+  }
+  if(recurrenceType === 'monthly'){
+    const day = d.getDate();
+    let newMonth = d.getMonth() + 1;
+    let newYear = d.getFullYear();
+    if(newMonth > 11){ newMonth = 0; newYear++; }
+    const daysInNewMonth = new Date(newYear, newMonth + 1, 0).getDate();
+    const clampedDay = Math.min(day, daysInNewMonth);
+    return toISODate(new Date(newYear, newMonth, clampedDay));
+  }
+  return null;
+}
 
 function addTask(){
   const input = document.getElementById('taskInput');
@@ -1027,6 +1032,7 @@ function addTask(){
     date: dateInput.value || null,
     time: timeInput.value || null,
     color: selectedColor || null,
+    recurrence: selectedRepeat || null,
     done: false,
     created: Date.now()
   });
@@ -1035,6 +1041,9 @@ function addTask(){
   selectedColor = '';
   colorRow.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
   colorRow.querySelector('.swatch[data-color=""]').classList.add('selected');
+  selectedRepeat = '';
+  document.querySelectorAll('#repeatChipRow .chip').forEach(c => c.classList.remove('selected'));
+  document.querySelector('#repeatChipRow .chip[data-repeat=""]').classList.add('selected');
   save();
   render();
 }
@@ -1053,6 +1062,15 @@ function startEdit(id){
       row.dataset.selected = btn.dataset.editColor || '';
     });
   }
+  const repeatRow = document.getElementById('editRepeatRow-' + id);
+  if(repeatRow){
+    repeatRow.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip');
+      if(!btn) return;
+      repeatRow.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+  }
 }
 
 function cancelEdit(){
@@ -1067,6 +1085,7 @@ function saveEdit(id){
   const dateEl = document.getElementById('editDate-' + id);
   const timeEl = document.getElementById('editTime-' + id);
   const colorRow = document.getElementById('editColorRow-' + id);
+  const repeatRow = document.getElementById('editRepeatRow-' + id);
   const newText = textEl.value.trim();
   if(!newText) return;
   t.text = newText;
@@ -1074,6 +1093,8 @@ function saveEdit(id){
   t.time = timeEl.value || null;
   const selectedSwatch = colorRow ? colorRow.querySelector('.swatch.selected') : null;
   t.color = selectedSwatch ? (selectedSwatch.dataset.editColor || null) : t.color;
+  const selectedRepeatChip = repeatRow ? repeatRow.querySelector('.chip.selected') : null;
+  t.recurrence = selectedRepeatChip ? (selectedRepeatChip.dataset.editRepeat || null) : t.recurrence;
   editingId = null;
   save();
   render();
@@ -1081,10 +1102,44 @@ function saveEdit(id){
 
 function toggleTask(id){
   const t = tasks.find(t=>t.id===id);
-  if(t){ t.done = !t.done; save(); render(); }
+  if(!t) return;
+  t.done = !t.done;
+  if(t.done && t.recurrence){
+    const nextDate = computeNextRecurrenceDate(t.date, t.recurrence);
+    if(nextDate){
+      tasks.push({
+        id: uid(),
+        text: t.text,
+        date: nextDate,
+        time: t.time,
+        color: t.color,
+        recurrence: t.recurrence,
+        done: false,
+        created: Date.now()
+      });
+    }
+  }
+  save();
+  render();
 }
 
 function deleteTask(id){
+  const t = tasks.find(t=>t.id===id);
+  if(t && t.recurrence && !t.done){
+    const nextDate = computeNextRecurrenceDate(t.date, t.recurrence);
+    if(nextDate){
+      tasks.push({
+        id: uid(),
+        text: t.text,
+        date: nextDate,
+        time: t.time,
+        color: t.color,
+        recurrence: t.recurrence,
+        done: false,
+        created: Date.now()
+      });
+    }
+  }
   tasks = tasks.filter(t=>t.id!==id);
   save();
   render();
@@ -1154,10 +1209,21 @@ function render(){
       const border = sw.c ? '' : 'border:1.5px dashed var(--border);';
       return `<button type="button" class="swatch ${isSelected?'selected':''}" data-edit-color="${sw.c}" style="background:${bg};${border}" aria-label="${sw.label}"></button>`;
     }).join('');
+    const repeatOptions = [
+      {v:'', label:'No repeat'},
+      {v:'daily', label:'Daily'},
+      {v:'weekly', label:'Weekly'},
+      {v:'monthly', label:'Monthly'}
+    ];
+    const repeatChipsHtml = repeatOptions.map(r => {
+      const isSelected = (t.recurrence || '') === r.v;
+      return `<button type="button" class="chip ${isSelected?'selected':''}" data-edit-repeat="${r.v}">${r.label}</button>`;
+    }).join('');
     return `
       <div class="edit-form" id="editForm-${t.id}">
         <input type="text" id="editText-${t.id}" value="${escapeAttr(t.text)}" />
         <div class="color-row" id="editColorRow-${t.id}" data-task-id="${t.id}">${swatchesHtml}</div>
+        <div class="chip-row" id="editRepeatRow-${t.id}" data-task-id="${t.id}">${repeatChipsHtml}</div>
         <div class="fields">
           <input type="date" id="editDate-${t.id}" value="${t.date || ''}" />
           <input type="time" id="editTime-${t.id}" step="300" value="${t.time || ''}" />
@@ -1187,7 +1253,7 @@ function render(){
         </div>
         <div class="task-body">
           <div class="task-text">${escapeHtml(t.text)}</div>
-          ${t.date ? `<div class="task-date" ${mutedStyle}>${fmtDate(t.date)}${t.time ? ' · ' + fmtTime(t.time) : ''}</div>` : ''}
+          ${t.date ? `<div class="task-date" ${mutedStyle}>${t.recurrence ? '⟳ ' : ''}${fmtDate(t.date)}${t.time ? ' · ' + fmtTime(t.time) : ''}</div>` : ''}
         </div>
         <button class="edit-btn" onclick="startEdit('${t.id}')" ${t.color ? `style="color:${contrastText(t.color)};"` : ''} aria-label="Edit">✎</button>
         <button class="del" onclick="deleteTask('${t.id}')" ${t.color ? `style="color:${contrastText(t.color)};"` : ''}>×</button>
@@ -1237,6 +1303,15 @@ colorRow.addEventListener('click', (e) => {
   colorRow.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
   btn.classList.add('selected');
   selectedColor = btn.dataset.color || '';
+});
+
+const repeatChipRow = document.getElementById('repeatChipRow');
+repeatChipRow.addEventListener('click', (e) => {
+  const btn = e.target.closest('.chip');
+  if(!btn) return;
+  repeatChipRow.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedRepeat = btn.dataset.repeat || '';
 });
 
 load();
@@ -1332,7 +1407,7 @@ async function loadExercise(){
   renderExerciseNames();
   renderHistory();
   renderTrendSelect();
-  renderNextUp();
+  renderExerciseReference();
   if(migrated) saveExercise();
 }
 
@@ -1436,7 +1511,7 @@ function addExerciseLog(){
   renderExerciseNames();
   renderHistory();
   renderTrendSelect();
-  renderNextUp();
+  renderExerciseReference();
 }
 
 function deleteExerciseLog(id){
@@ -1444,43 +1519,16 @@ function deleteExerciseLog(id){
   saveExercise();
   renderHistory();
   renderTrendSelect();
-  renderNextUp();
+  renderExerciseReference();
 }
 
 function fmtSets(sets){
   return sets.map(s => `${s.weight}kg×${s.reps}`).join(', ');
 }
 
-function computeNextUp(){
-  const today = todayStr();
-  const todaysLogs = exerciseLogs
-    .filter(l => l.date === today)
-    .slice()
-    .sort((a,b)=> a.created - b.created);
+let exRefExpanded = false;
 
-  let pointer = 0;
-  todaysLogs.forEach(log => {
-    const norm = log.exercise.trim().toLowerCase();
-    for(let i = pointer; i < ROUTINE.length; i++){
-      if(ROUTINE[i].ex.trim().toLowerCase() === norm){
-        pointer = i + 1;
-        break;
-      }
-    }
-  });
-
-  if(pointer >= ROUTINE.length){
-    return { done: true };
-  }
-  return {
-    done: false,
-    next: ROUTINE[pointer],
-    upcoming: ROUTINE.slice(pointer + 1, pointer + 3)
-  };
-}
-
-function useNextUp(exName, muscleCsv){
-  document.getElementById('tabExerciseBtn').click();
+function pickExercise(exName, muscleCsv){
   const nameInput = document.getElementById('exNameInput');
   nameInput.value = exName;
   const match = findLastLogFor(exName);
@@ -1496,33 +1544,64 @@ function useNextUp(exName, muscleCsv){
   nameInput.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
-function renderNextUp(){
-  const el = document.getElementById('nextUpCard');
-  const result = computeNextUp();
-  if(result.done){
+// Builds a muscle -> [exercise names] lookup from the fixed routine list
+// plus any custom exercises logged with a muscle tag, deduplicated.
+function buildExerciseReference(){
+  const map = {};
+  function add(muscle, name){
+    if(!name) return;
+    if(!map[muscle]) map[muscle] = new Set();
+    map[muscle].add(name);
+  }
+  ROUTINE.forEach(r => {
+    if(r.ex === 'Various Abs Exercises') return; // placeholder, not a real named exercise
+    normalizeMuscles(r.m).forEach(m => add(m, r.ex));
+  });
+  exerciseLogs.forEach(l => {
+    const muscles = (l.muscleGroups && l.muscleGroups.length) ? l.muscleGroups : ['Unassigned'];
+    muscles.forEach(m => add(m, l.exercise));
+  });
+  const order = MUSCLE_GROUPS.concat(['Unassigned']);
+  return order
+    .filter(m => map[m] && map[m].size)
+    .map(m => ({ muscle: m, exercises: Array.from(map[m]).sort((a,b)=>a.localeCompare(b)) }));
+}
+
+function renderExerciseReference(){
+  const el = document.getElementById('exRefCard');
+  const groups = buildExerciseReference();
+  const totalCount = groups.reduce((s,g)=>s+g.exercises.length, 0);
+
+  if(!exRefExpanded){
     el.innerHTML = `
-      <div class="next-up-card">
-        <div class="next-up-label">Coming up next</div>
-        <div class="next-up-complete">🎉 All exercises done for today — nice work</div>
+      <div class="ex-ref-card">
+        <div class="ex-ref-header" id="exRefToggle">
+          <span class="cal-history-caret">▸</span> Exercise reference (${totalCount})
+        </div>
       </div>`;
     return;
   }
-  const nextMuscles = normalizeMuscles(result.next.m);
-  const muscleHtml = nextMuscles.map(m =>
-    `<span style="color:${MUSCLE_COLORS[m] || 'var(--muted)'};">${escapeHtml(m)}</span>`
-  ).join(' · ');
-  const thenNames = result.upcoming.map(u => u.ex).join(', ');
+
+  const groupsHtml = groups.map(g => {
+    const color = MUSCLE_COLORS[g.muscle] || 'var(--muted)';
+    const chipsHtml = g.exercises.map(ex =>
+      `<button type="button" class="chip ex-ref-item" style="border-color:${color};color:${color};" data-ex-name="${escapeAttr(ex)}" data-ex-muscle="${escapeAttr(g.muscle)}">${escapeHtml(ex)}</button>`
+    ).join('');
+    return `
+      <div class="ex-ref-group">
+        <div class="ex-ref-group-label" style="color:${color};">${escapeHtml(g.muscle)}</div>
+        <div class="chip-row">${chipsHtml}</div>
+      </div>`;
+  }).join('');
+
   el.innerHTML = `
-    <div class="next-up-card">
-      <div class="next-up-label">Coming up next</div>
-      <div class="next-up-main">
-        <div>
-          <div class="next-up-name">${escapeHtml(result.next.ex)}</div>
-          <div class="next-up-muscle">${muscleHtml}</div>
-        </div>
-        <button type="button" class="next-up-use-btn" data-next-ex="${escapeAttr(result.next.ex)}" data-next-muscle="${escapeAttr(nextMuscles.join(','))}">Log this</button>
+    <div class="ex-ref-card">
+      <div class="ex-ref-header" id="exRefToggle">
+        <span class="cal-history-caret">▾</span> Exercise reference (${totalCount})
       </div>
-      ${thenNames ? `<div class="next-up-then">then: ${escapeHtml(thenNames)}</div>` : ''}
+      <div class="ex-ref-body">
+        ${groupsHtml || '<div class="empty">nothing to show yet</div>'}
+      </div>
     </div>`;
 }
 
@@ -1726,10 +1805,17 @@ document.getElementById('tabTasksBtn').addEventListener('click', () => switchMai
 document.getElementById('tabExerciseBtn').addEventListener('click', () => switchMainTab('exercise'));
 document.getElementById('tabCaloriesBtn').addEventListener('click', () => switchMainTab('calories'));
 
-document.getElementById('nextUpCard').addEventListener('click', (e) => {
-  const btn = e.target.closest('.next-up-use-btn');
-  if(!btn) return;
-  useNextUp(btn.dataset.nextEx, btn.dataset.nextMuscle);
+document.getElementById('exRefCard').addEventListener('click', (e) => {
+  const toggle = e.target.closest('#exRefToggle');
+  if(toggle){
+    exRefExpanded = !exRefExpanded;
+    renderExerciseReference();
+    return;
+  }
+  const item = e.target.closest('.ex-ref-item');
+  if(item){
+    pickExercise(item.dataset.exName, item.dataset.exMuscle);
+  }
 });
 
 document.getElementById('exHistory').addEventListener('click', (e) => {

@@ -1522,6 +1522,15 @@ function deleteExerciseLog(id){
   renderExerciseReference();
 }
 
+function deleteExerciseLogGroup(idsCsv){
+  const ids = idsCsv.split(',');
+  exerciseLogs = exerciseLogs.filter(l => !ids.includes(l.id));
+  saveExercise();
+  renderHistory();
+  renderTrendSelect();
+  renderExerciseReference();
+}
+
 function fmtSets(sets){
   return sets.map(s => `${s.weight}kg×${s.reps}`).join(', ');
 }
@@ -1561,10 +1570,12 @@ function buildExerciseReference(){
     const muscles = (l.muscleGroups && l.muscleGroups.length) ? l.muscleGroups : ['Unassigned'];
     muscles.forEach(m => add(m, l.exercise));
   });
-  const order = MUSCLE_GROUPS.concat(['Unassigned']);
-  return order
-    .filter(m => map[m] && map[m].size)
-    .map(m => ({ muscle: m, exercises: Array.from(map[m]).sort((a,b)=>a.localeCompare(b)) }));
+  const unassignedCount = map['Unassigned'] ? map['Unassigned'].size : 0;
+  const order = MUSCLE_GROUPS.concat(unassignedCount ? ['Unassigned'] : []);
+  return order.map(m => ({
+    muscle: m,
+    exercises: map[m] ? Array.from(map[m]).sort((a,b)=>a.localeCompare(b)) : []
+  }));
 }
 
 function renderExerciseReference(){
@@ -1584,6 +1595,13 @@ function renderExerciseReference(){
 
   const groupsHtml = groups.map(g => {
     const color = MUSCLE_COLORS[g.muscle] || 'var(--muted)';
+    if(g.exercises.length === 0){
+      return `
+      <div class="ex-ref-group">
+        <div class="ex-ref-group-label" style="color:${color};">${escapeHtml(g.muscle)}</div>
+        <div class="cal-item-sub">No exercises logged for ${escapeHtml(g.muscle)} yet</div>
+      </div>`;
+    }
     const chipsHtml = g.exercises.map(ex =>
       `<button type="button" class="chip ex-ref-item" style="border-color:${color};color:${color};" data-ex-name="${escapeAttr(ex)}" data-ex-muscle="${escapeAttr(g.muscle)}">${escapeHtml(ex)}</button>`
     ).join('');
@@ -1600,7 +1618,7 @@ function renderExerciseReference(){
         <span class="cal-history-caret">▾</span> Exercise reference (${totalCount})
       </div>
       <div class="ex-ref-body">
-        ${groupsHtml || '<div class="empty">nothing to show yet</div>'}
+        ${groupsHtml}
       </div>
     </div>`;
 }
@@ -1619,23 +1637,46 @@ function renderHistory(){
   });
   const dates = Object.keys(byDate).sort((a,b)=> b.localeCompare(a));
   el.innerHTML = dates.map(date => {
-    const entries = byDate[date].slice().sort((a,b)=> b.created - a.created);
+    const entries = byDate[date].slice().sort((a,b)=> a.created - b.created);
+
+    // Group entries logged independently for the same exercise on the same
+    // date into a single combined block (merged sets + muscle tags).
+    const grouped = [];
+    const indexByName = {};
+    entries.forEach(l => {
+      const key = l.exercise.trim().toLowerCase();
+      if(indexByName[key] === undefined){
+        indexByName[key] = grouped.length;
+        grouped.push({
+          exercise: l.exercise,
+          muscleGroups: [],
+          sets: [],
+          ids: []
+        });
+      }
+      const g = grouped[indexByName[key]];
+      (l.muscleGroups||[]).forEach(m => { if(!g.muscleGroups.includes(m)) g.muscleGroups.push(m); });
+      g.sets = g.sets.concat(l.sets);
+      g.ids.push(l.id);
+    });
+    grouped.reverse(); // most recently logged exercise first
+
     const isOpen = exHistoryExpanded.has(date);
-    const nameListHtml = entries.map(l => {
-      const primaryMuscle = (l.muscleGroups && l.muscleGroups[0]) || null;
+    const nameListHtml = grouped.map(g => {
+      const primaryMuscle = g.muscleGroups[0] || null;
       const color = primaryMuscle ? (MUSCLE_COLORS[primaryMuscle] || 'var(--muted)') : 'var(--muted)';
-      return `<span style="color:${color};">${escapeHtml(l.exercise)}</span>`;
+      return `<span style="color:${color};">${escapeHtml(g.exercise)}</span>`;
     }).join(', ');
-    const entriesHtml = entries.map(l => `
+    const entriesHtml = grouped.map(g => `
       <div class="ex-entry">
         <div class="ex-entry-top">
           <div>
-            <span class="ex-name">${escapeHtml(l.exercise)}</span>
-            ${(l.muscleGroups||[]).map(m => `<span class="ex-muscle-tag" style="color:${MUSCLE_COLORS[m] || 'var(--muted)'};"> · ${escapeHtml(m)}</span>`).join('')}
+            <span class="ex-name">${escapeHtml(g.exercise)}</span>
+            ${g.muscleGroups.map(m => `<span class="ex-muscle-tag" style="color:${MUSCLE_COLORS[m] || 'var(--muted)'};"> · ${escapeHtml(m)}</span>`).join('')}
           </div>
-          <button class="del" onclick="deleteExerciseLog('${l.id}')" aria-label="Delete">×</button>
+          <button class="del" onclick="deleteExerciseLogGroup('${g.ids.join(',')}')" aria-label="Delete">×</button>
         </div>
-        <div class="ex-sets-summary">${escapeHtml(fmtSets(l.sets))}</div>
+        <div class="ex-sets-summary">${escapeHtml(fmtSets(g.sets))}</div>
       </div>
     `).join('');
     return `<div class="ex-date-group">
